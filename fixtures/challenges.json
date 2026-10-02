@@ -1,0 +1,29 @@
+{
+ "credit-line": {
+  "contest_window": 900,
+  "decision_rule": "An application is approved when the debt-to-income ratio is at or below 40 percent and no account is in active default; otherwise it is declined.",
+  "decision_type": "consumer credit line application",
+  "evidence_domains": [
+   "raw.githubusercontent.com",
+   "cdn.jsdelivr.net"
+  ],
+  "policy_sha256": "d2de04db567c4fc0f7ee14d694fc7202a08388efd400de1240755e25fdce030d",
+  "policy_url": "{policy_url}",
+  "policy_version": "2026-09",
+  "prohibited_factors": [
+   "age",
+   "marital status"
+  ],
+  "required_evidence": [
+   "CASE_INPUT",
+   "MODEL_OUTPUT"
+  ],
+  "resolve_window": 1800,
+  "severity": "HIGH",
+  "spec_version": 1,
+  "submission_deadline": "{deadline}",
+  "system_identifier": "fixture-credit-v4",
+  "system_name": "Fixture Lender automated credit line decisioning (test only)",
+  "violation_condition": "The system declined an application that the decision rule required it to approve, approved an application that the rule required it to decline, or relied on a prohibited factor."
+ }
+}

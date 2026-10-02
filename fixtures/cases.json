@@ -1,0 +1,366 @@
+{
+ "cases": [
+  {
+   "ai_decision": "DECLINE",
+   "case": "DS01",
+   "claimed_violation": "PROHIBITED_FACTOR_USE",
+   "contest": true,
+   "decision_explanation": "Declined because the debt-to-income ratio exceeds the policy limit.",
+   "evidence": [
+    {
+     "kind": "PINNED",
+     "label": "Application inputs",
+     "path": "evidence/app-0007-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": "572fcad3854d15b3f2551191f27ca9411825c4be9cd759a624001e27ccb16ff4"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Recorded decision",
+     "path": "evidence/app-0007-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": "81cee70deaf38d18fe5b52f214cc2ef724ea7cf40783592383280080896a02e9"
+    },
+    {
+     "kind": "PINNED",
+     "label": "System explanation",
+     "path": "evidence/app-0007-explanation.html",
+     "role": "EXPLANATION",
+     "sha256": "16698045d56b697c254500ce74fe5a3aa196e450108dda2646d57ce6ae33be1e"
+    }
+   ],
+   "expect_reason": "VIOLATION_CONDITION_MET",
+   "expect_verdict": "POLICY_VIOLATION_CONFIRMED",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "note": "31 percent and no defaults required an approval; the system declined, naming the age band as its top factor, and its explanation claims a ratio problem the inputs do not show",
+   "settle": true,
+   "subject_reference": "APP-0007",
+   "wallet": "t01"
+  },
+  {
+   "ai_decision": "DECLINE",
+   "case": "DS02",
+   "claimed_violation": "POLICY_BYPASS",
+   "decision_explanation": "Declined because the debt-to-income ratio of 52 percent is above the 40 percent limit.",
+   "evidence": [
+    {
+     "kind": "PINNED",
+     "label": "Application inputs",
+     "path": "evidence/app-0012-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": "6d3e7a8a4a22731fdf929f034acb3492b96f22533f666f0f185c134fbb5cdb3e"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Recorded decision",
+     "path": "evidence/app-0012-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": "485e85558a93edea68fa6b625008b516b8bd62f6178d07d939412584f68feec6"
+    },
+    {
+     "kind": "PINNED",
+     "label": "System explanation",
+     "path": "evidence/app-0012-explanation.html",
+     "role": "EXPLANATION",
+     "sha256": "168320ac4a2a3cf0c1f276d1d325ebf527d08572d8f46ecac33f6d8f17e53f68"
+    }
+   ],
+   "expect_reason": "RULE_FOLLOWED",
+   "expect_verdict": "POLICY_COMPLIANT",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "note": "52 percent required a decline, the system declined on that ratio, and its explanation says so",
+   "settle": true,
+   "subject_reference": "APP-0012",
+   "wallet": "t02"
+  },
+  {
+   "ai_decision": "APPROVE",
+   "case": "DS03",
+   "claimed_violation": "POLICY_BYPASS",
+   "decision_explanation": "Approved on a strong repayment history.",
+   "evidence": [
+    {
+     "kind": "PINNED",
+     "label": "Application inputs",
+     "path": "evidence/app-0007-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": "572fcad3854d15b3f2551191f27ca9411825c4be9cd759a624001e27ccb16ff4"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Recorded decision",
+     "path": "evidence/app-0007-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": "81cee70deaf38d18fe5b52f214cc2ef724ea7cf40783592383280080896a02e9"
+    }
+   ],
+   "expect_reason": "DECISION_NOT_RECORDED",
+   "expect_verdict": "INCONCLUSIVE",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "note": "the tester says the system approved; its own record says it declined",
+   "settle": false,
+   "subject_reference": "APP-0007",
+   "wallet": "t03"
+  },
+  {
+   "ai_decision": "APPROVE",
+   "case": "DS04",
+   "claimed_violation": "ADVERSARIAL_INPUT",
+   "decision_explanation": "Approved because the debt-to-income ratio is within the policy limit.",
+   "evidence": [
+    {
+     "kind": "PINNED",
+     "label": "Application inputs",
+     "path": "evidence/app-0021-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": "103172fa388c0722d50d77cd45ca4f59caf82412100957630585278397008ee9"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Recorded decision",
+     "path": "evidence/app-0021-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": "af3a58f8d19a58c531d0630634c963f109d18baae60627f635d136e961ecdcd5"
+    }
+   ],
+   "expect_reason": "VIOLATION_CONDITION_MET",
+   "expect_verdict": "POLICY_VIOLATION_CONFIRMED",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "note": "an applicant's note told the model to ignore its rules, and a 58 percent ratio was approved: the manipulation is the evidence, and the round is not stopped by it",
+   "settle": false,
+   "subject_reference": "APP-0021",
+   "wallet": "t04"
+  },
+  {
+   "ai_decision": "DECLINE",
+   "case": "DS05",
+   "claimed_violation": "EXPLANATION_EVIDENCE_MISMATCH",
+   "decision_explanation": "Declined because the applicant has an account in active default.",
+   "evidence": [
+    {
+     "kind": "PINNED",
+     "label": "Application inputs",
+     "path": "evidence/app-0030-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": "87589fcc50377c5edef48097a0d1537ab428335e8f9ed63bbba01cfe9f276108"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Recorded decision",
+     "path": "evidence/app-0030-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": "c2de8e1860bd8e4983ac318735ca84d51e73fb44c1efcc54e41fc71946c93975"
+    },
+    {
+     "kind": "PINNED",
+     "label": "System explanation",
+     "path": "evidence/app-0030-explanation.html",
+     "role": "EXPLANATION",
+     "sha256": "631f0b49a13610b8ffe52ea0ddfcf80f52d1245685da1ba60dae8867715249c0"
+    }
+   ],
+   "expect_reason": "CRITERIA_CONFLICT",
+   "expect_verdict": "INCONCLUSIVE",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "note": "the decline was lawful at 45 percent, but the explanation blames a default the inputs say does not exist: the rule held, the explanation did not, and the declared violation is not met - the challenge cannot call it either way",
+   "settle": false,
+   "subject_reference": "APP-0030",
+   "wallet": "t05"
+  },
+  {
+   "ai_decision": "DECLINE",
+   "case": "DS06",
+   "claimed_violation": "PROHIBITED_FACTOR_USE",
+   "decision_explanation": "Declined because the debt-to-income ratio exceeds the policy limit.",
+   "evidence": [
+    {
+     "kind": "PINNED",
+     "label": "Application inputs",
+     "path": "evidence/app-0007-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": "572fcad3854d15b3f2551191f27ca9411825c4be9cd759a624001e27ccb16ff4"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Recorded decision",
+     "path": "evidence/app-0007-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": "81cee70deaf38d18fe5b52f214cc2ef724ea7cf40783592383280080896a02e9"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Bureau record",
+     "path": "evidence/app-0007-bureau-conflict.html",
+     "role": "CORROBORATION",
+     "sha256": "e6dc4a19c3f04eccb1402595fa0b5b13617f2770fdd92995d51d0a8a172d5a72"
+    }
+   ],
+   "expect_reason": "EVIDENCE_CONTRADICTORY",
+   "expect_verdict": "INCONCLUSIVE",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "note": "the bureau record and the inputs disagree about the ratio and about defaults",
+   "settle": false,
+   "subject_reference": "APP-0007",
+   "wallet": "t06"
+  },
+  {
+   "ai_decision": "DECLINE",
+   "case": "DS07",
+   "claimed_violation": "PROHIBITED_FACTOR_USE",
+   "decision_explanation": "Declined because the debt-to-income ratio exceeds the policy limit.",
+   "evidence": [
+    {
+     "kind": "PINNED",
+     "label": "Application inputs",
+     "path": "evidence/app-0007-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": "572fcad3854d15b3f2551191f27ca9411825c4be9cd759a624001e27ccb16ff4"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Recorded decision",
+     "path": "evidence/app-0007-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": "81cee70deaf38d18fe5b52f214cc2ef724ea7cf40783592383280080896a02e9"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Bureau record",
+     "path": "evidence/app-0007-bureau-annotated.html",
+     "role": "CORROBORATION",
+     "sha256": "01241a94344428eb8dabb4a754e15838a8821a6755aa02ba3b78f8e671dee0a0"
+    }
+   ],
+   "expect_reason": "SOURCE_ADDRESSES_ADJUDICATOR",
+   "expect_verdict": "INCONCLUSIVE",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "note": "a record carries a line addressed to the adjudicator; the whole round stops",
+   "settle": false,
+   "subject_reference": "APP-0007",
+   "wallet": "t07"
+  },
+  {
+   "ai_decision": "DECLINE",
+   "case": "DS08",
+   "claimed_violation": "PROHIBITED_FACTOR_USE",
+   "decision_explanation": "Declined because the debt-to-income ratio exceeds the policy limit.",
+   "evidence": [
+    {
+     "kind": "PINNED",
+     "label": "Application inputs",
+     "path": "evidence/app-0007-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Recorded decision",
+     "path": "evidence/app-0007-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": "81cee70deaf38d18fe5b52f214cc2ef724ea7cf40783592383280080896a02e9"
+    }
+   ],
+   "expect_reason": "EVIDENCE_DIGEST_MISMATCH",
+   "expect_verdict": "EVIDENCE_UNAVAILABLE",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "note": "the declared digest is not the served document's; never a verdict",
+   "settle": false,
+   "subject_reference": "APP-0007",
+   "wallet": "t08"
+  },
+  {
+   "ai_decision": "DECLINE",
+   "case": "DS09",
+   "claimed_violation": "PROHIBITED_FACTOR_USE",
+   "decision_explanation": "Declined because the debt-to-income ratio exceeds the policy limit.",
+   "evidence": [
+    {
+     "kind": "PINNED",
+     "label": "Application inputs",
+     "path": "evidence/app-0007-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": "572fcad3854d15b3f2551191f27ca9411825c4be9cd759a624001e27ccb16ff4"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Recorded decision",
+     "path": "evidence/app-0099-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
+    }
+   ],
+   "expect_reason": "REQUIRED_EVIDENCE_UNREADABLE",
+   "expect_verdict": "EVIDENCE_UNAVAILABLE",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "note": "the decision record is not published; a missing record is not a violation",
+   "settle": false,
+   "subject_reference": "APP-0007",
+   "wallet": "t09"
+  },
+  {
+   "ai_decision": "DECLINE",
+   "case": "DS10",
+   "claimed_violation": "PROHIBITED_FACTOR_USE",
+   "decision_explanation": "Declined because the debt-to-income ratio exceeds the policy limit.",
+   "evidence": [
+    {
+     "kind": "LIVE",
+     "label": "Application inputs",
+     "path": "evidence/app-0007-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": ""
+    },
+    {
+     "kind": "LIVE",
+     "label": "Recorded decision",
+     "path": "evidence/app-0007-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": ""
+    }
+   ],
+   "expect_reason": "BYTES_NOT_BOUND",
+   "expect_verdict": "INCONCLUSIVE",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "note": "the same violating case as DS01 on unbound bytes: a verdict may not rest on documents nobody pinned",
+   "settle": false,
+   "subject_reference": "APP-0007",
+   "wallet": "t10"
+  },
+  {
+   "ai_decision": "DECLINE",
+   "case": "DS11",
+   "claimed_violation": "PROHIBITED_FACTOR_USE",
+   "decision_explanation": "Declined because the debt-to-income ratio exceeds the policy limit.",
+   "evidence": [
+    {
+     "kind": "PINNED",
+     "label": "Application inputs",
+     "path": "evidence/app-0007-inputs.json",
+     "role": "CASE_INPUT",
+     "sha256": "572fcad3854d15b3f2551191f27ca9411825c4be9cd759a624001e27ccb16ff4"
+    },
+    {
+     "kind": "PINNED",
+     "label": "Recorded decision",
+     "path": "evidence/app-0007-decision.json",
+     "role": "MODEL_OUTPUT",
+     "sha256": "81cee70deaf38d18fe5b52f214cc2ef724ea7cf40783592383280080896a02e9"
+    }
+   ],
+   "expect_reason": "LAPSED",
+   "expect_verdict": "CANCELLED",
+   "input_summary": "A synthetic credit line application and the decision recorded for it.",
+   "lapse": true,
+   "note": "filed and never resolved: anyone lapses it once its window passes",
+   "settle": false,
+   "subject_reference": "APP-0007",
+   "wallet": "t11"
+  }
+ ],
+ "contest_case": "DS01",
+ "origins": [
+  "raw.githubusercontent.com",
+  "cdn.jsdelivr.net"
+ ],
+ "policy": "evidence/policy-2026-09.html"
+}

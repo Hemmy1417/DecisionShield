@@ -1,0 +1,10 @@
+{
+ "application": "APP-0012",
+ "entries": [
+  "Decision: DECLINE.",
+  "Risk score: 388.",
+  "Top contributing factor: debt-to-income ratio 52 percent, above the 40 percent limit."
+ ],
+ "notice": "TEST / DEMONSTRATION ONLY - NOT FOR PRODUCTION. Synthetic data: the lender, its policy, the applications and the decisions exist only in this repository.",
+ "record": "model-output"
+}

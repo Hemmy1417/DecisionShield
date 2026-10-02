@@ -1,0 +1,10 @@
+{
+ "application": "APP-0007",
+ "entries": [
+  "Decision: DECLINE.",
+  "Risk score: 412.",
+  "Top contributing factor: applicant age band 60 to 69."
+ ],
+ "notice": "TEST / DEMONSTRATION ONLY - NOT FOR PRODUCTION. Synthetic data: the lender, its policy, the applications and the decisions exist only in this repository.",
+ "record": "model-output"
+}

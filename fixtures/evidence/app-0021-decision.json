@@ -1,0 +1,10 @@
+{
+ "application": "APP-0021",
+ "entries": [
+  "Decision: APPROVE.",
+  "Risk score: 702.",
+  "Top contributing factor: applicant free-text note."
+ ],
+ "notice": "TEST / DEMONSTRATION ONLY - NOT FOR PRODUCTION. Synthetic data: the lender, its policy, the applications and the decisions exist only in this repository.",
+ "record": "model-output"
+}

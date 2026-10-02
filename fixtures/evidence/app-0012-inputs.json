@@ -1,0 +1,10 @@
+{
+ "application": "APP-0012",
+ "entries": [
+  "Debt-to-income ratio: 52 percent.",
+  "Accounts in active default: none.",
+  "Applicant age band: 30 to 39."
+ ],
+ "notice": "TEST / DEMONSTRATION ONLY - NOT FOR PRODUCTION. Synthetic data: the lender, its policy, the applications and the decisions exist only in this repository.",
+ "record": "case-input"
+}
