@@ -31,12 +31,14 @@ on bytes they fetch themselves, and compare.
 
 ## Collision audit (the owner's own portfolio, 60 repositories)
 
+The nearest repositories are described by what they do, not named.
+
 | Nearest | What it decides | Why this is different |
 |---|---|---|
-| RedTeam Court | whether an AI agent's conduct breached its controller's security policy; bonds, bounties, remediation | judges agent *conduct* against a *security* policy and moves funds; this judges one *decision record* against a *decision* policy, and moves nothing |
-| CredenceLend | what a borrower's evidence supports under a lender's policy: score, band, exposure | *makes* a credit assessment; this *audits* an assessment another system made |
-| InsureShield | whether claim evidence satisfies an insurance policy | judges a claimant's evidence; this judges the decision-maker |
-| Sentinel, Kredo | dynamic credit terms from evidence | credit products, not adjudication of a model's decision |
+| an agent-conduct court | whether an AI agent's conduct breached its controller's security policy; bonds, bounties, remediation | judges agent *conduct* against a *security* policy and moves funds; this judges one *decision record* against a *decision* policy, and moves nothing |
+| a credit-assessment contract | what a borrower's evidence supports under a lender's policy: score, band, exposure | *makes* a credit assessment; this *audits* an assessment another system made |
+| an insurance-claims contract | whether claim evidence satisfies an insurance policy | judges a claimant's evidence; this judges the decision-maker |
+| two credit products | dynamic credit terms from evidence | credit products, not adjudication of a model's decision |
 
 ## Responsibility split
 
@@ -92,7 +94,7 @@ the items agree with each other.
 }
 ```
 
-`policy_hash` in the brief's model is the policy document's sha256. The
+The brief's policy hash is the policy document's sha256, `policy_sha256`. The
 challenge's own canonical JSON is hashed again (`definition_hash`), and a
 submission commits to both and to the policy version.
 

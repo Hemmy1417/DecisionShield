@@ -75,7 +75,7 @@ def main():
                 encoding="utf-8")):
             symbolic = token.startswith("_") or "_" in token
             # a record file under deploy/ names the deployment it ran against
-            # (pass1_0x711dd6ed); an address fragment is never a contract symbol
+            # (pass2_0xc95e80e2); an address fragment is never a contract symbol
             record_name = "_0x" in token
             if not symbolic or record_name or token in EXTERNAL or token.startswith("test_"):
                 continue

@@ -177,10 +177,16 @@ reading verdict, severity, criteria and the policy hash.
 | `python scripts/generate_fixtures.py --check` | 16 fixture files regenerate byte for byte |
 | `python scripts/mutation_check.py` | 85 mutations, **85 killed, 0 survived** |
 | `python scripts/deploy_studionet.py --verify` | deployed and repository sha256 equal, 24 schema methods |
-| `python -m pytest tests/integration -q` | INTEGRATION_PENDING |
-| live run of record | LIVE_PENDING |
+| `python -m pytest tests/integration -q` | 7 passed, 1 skipped (the live-write test runs only with `DS_LIVE_WRITES=1`) |
+| live run of record | 37 transactions, **14 of 14 outcomes held, 11 of 11 refusals refused** |
 
-LIVE_SUMMARY_PENDING
+Every verdict the contract can store was reached on chain against the canonical
+deployment: a confirmed violation (and the publisher's contest upholding it),
+compliance, a violation won by an applicant's injected note, four distinct
+inconclusive reasons, two unavailable-evidence outcomes, two finalized verdicts
+read back through `is_policy_violation_confirmed`, a lapse, and eleven refusals
+for the reasons they were sent to test. Every transaction is linked in
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#live-run-of-record).
 <!-- VERIFIED:END -->
 
 ## Reviewer fast path

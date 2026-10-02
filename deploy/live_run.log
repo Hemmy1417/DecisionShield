@@ -1,0 +1,98 @@
+23:00:36 contract 0xc95E80E2a1bDe77A2e8aCB18fcaa374a6385cBf0 phase full
+23:00:36 phase challenges
+23:00:36   challenge:credit-line: publish_challenge as publisher
+23:01:15     FINALIZED/SUCCESS votes idle,agree,agree,agree,idle
+23:01:18     credit-line -> DS-000002
+23:01:18 phase cases
+23:01:20   file:DS11: submit_case as t11
+23:01:58     FINALIZED/SUCCESS votes agree,agree,agree,idle,agree
+23:02:04   file:DS01: submit_case as t01
+23:02:42     FINALIZED/SUCCESS votes idle,agree,agree,idle,agree
+23:02:46   resolve:DS01: resolve as keeper
+23:04:10     FINALIZED/SUCCESS votes agree,agree,agree,disagree,idle
+23:04:12     DS01: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+23:04:12   contest:DS01: contest as publisher
+23:05:08     FINALIZED/SUCCESS votes agree,idle,agree,agree,idle
+23:05:10     DS01:contest: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+23:05:12   file:DS02: submit_case as t02
+23:05:52     FINALIZED/SUCCESS votes agree,agree,idle,agree,idle
+23:05:55   resolve:DS02: resolve as keeper
+23:07:08     FINALIZED/SUCCESS votes agree,agree,agree,idle,idle
+23:07:10     DS02: POLICY_COMPLIANT/RULE_FOLLOWED HELD
+23:07:12   file:DS03: submit_case as t03
+23:07:52     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+23:07:55   resolve:DS03: resolve as keeper
+23:09:10     FINALIZED/SUCCESS votes agree,agree,idle,agree,disagree
+23:09:12     DS03: INCONCLUSIVE/DECISION_NOT_RECORDED HELD
+23:09:14   file:DS04: submit_case as t04
+23:09:52     FINALIZED/SUCCESS votes idle,agree,agree,idle,agree
+23:09:56   resolve:DS04: resolve as keeper
+23:12:41     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+23:12:43     DS04: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+23:12:44   file:DS05: submit_case as t05
+23:13:23     FINALIZED/SUCCESS votes agree,idle,idle,agree,agree
+23:13:26   resolve:DS05: resolve as keeper
+23:15:53     FINALIZED/SUCCESS votes idle,agree,agree,agree,idle
+23:15:55     DS05: INCONCLUSIVE/CRITERIA_CONFLICT HELD
+23:15:57   file:DS06: submit_case as t06
+23:16:36     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+23:16:39   resolve:DS06: resolve as keeper
+23:17:40     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+23:17:42     DS06: INCONCLUSIVE/EVIDENCE_CONTRADICTORY HELD
+23:17:43   file:DS07: submit_case as t07
+23:18:21     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+23:18:25   resolve:DS07: resolve as keeper
+23:19:09     FINALIZED/SUCCESS votes agree,idle,idle,agree,agree
+23:19:10     DS07: INCONCLUSIVE/SOURCE_ADDRESSES_ADJUDICATOR HELD
+23:19:12   file:DS08: submit_case as t08
+23:19:56     FINALIZED/SUCCESS votes agree,idle,idle,agree,agree
+23:20:00   resolve:DS08: resolve as keeper
+23:20:45     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+23:20:46     DS08: EVIDENCE_UNAVAILABLE/EVIDENCE_DIGEST_MISMATCH HELD
+23:20:48   file:DS09: submit_case as t09
+23:21:27     FINALIZED/SUCCESS votes idle,agree,agree,agree,idle
+23:21:30   resolve:DS09: resolve as keeper
+23:22:10     FINALIZED/SUCCESS votes idle,agree,agree,idle,agree
+23:22:12     DS09: EVIDENCE_UNAVAILABLE/REQUIRED_EVIDENCE_UNREADABLE HELD
+23:22:14   file:DS10: submit_case as t10
+23:22:59     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+23:23:02   resolve:DS10: resolve as keeper
+23:24:32     FINALIZED/SUCCESS votes agree,agree,idle,idle,agree
+23:24:33     DS10: INCONCLUSIVE/BYTES_NOT_BOUND HELD
+23:24:33 phase settle
+23:24:35   finalize:DS01: finalize as keeper
+23:25:13     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+23:25:22     DS01 consumer view: confirmed=True compliant=False HELD
+23:25:24   finalize:DS02: finalize as keeper
+23:26:03     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+23:26:06     DS02 consumer view: confirmed=False compliant=True HELD
+23:26:08   waiting 319s for the resolve window of DC-000012
+23:28:08   waiting 199s for the resolve window of DC-000012
+23:30:08   waiting 79s for the resolve window of DC-000012
+23:31:28   lapse:DS11: lapse_case as keeper
+23:32:07     FINALIZED/SUCCESS votes agree,idle,agree,agree,idle
+23:32:10   stats: {"challenges": 2, "resolutions": 22, "submissions": 22, "violations_confirmed": 4}
+23:32:10 phase refusals
+23:32:12   refuse:stale_policy_version: expecting a refusal of submit_case
+23:32:49     refused
+23:32:49   refuse:policy_hash_mismatch: expecting a refusal of submit_case
+23:33:27     refused
+23:33:27   refuse:personal_identifier: expecting a refusal of submit_case
+23:34:10     refused
+23:34:10   refuse:email_in_summary: expecting a refusal of submit_case
+23:34:48     refused
+23:34:48   refuse:outside_domains: expecting a refusal of submit_case
+23:35:26     refused
+23:35:26   refuse:explanation_addresses_adjudicator: expecting a refusal of submit_case
+23:36:09     refused
+23:36:09   refuse:second_case_same_tester: expecting a refusal of submit_case
+23:36:47     refused
+23:36:48   refuse:cancel_with_cases: expecting a refusal of cancel_challenge
+23:37:31     refused
+23:37:31   refuse:double_resolution: expecting a refusal of resolve
+23:38:09     refused
+23:38:09   refuse:stranger_contest: expecting a refusal of contest
+23:38:53     refused
+23:38:53   refuse:stranger_withdraw: expecting a refusal of withdraw_case
+23:39:31     refused
+23:39:31 summary {"steps": 37, "transactions": 37, "outcomes_checked": 14, "outcomes_held": 14, "missed": [], "refusals": 11, "refusals_held": 11}
