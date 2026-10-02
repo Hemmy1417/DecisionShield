@@ -1,0 +1,211 @@
+{
+ "address": "0x99612D2DD20AEf6154ff737a22a74baEa50f5a5b",
+ "deadline": "2026-10-03T03:11:29Z",
+ "finished_at": "2026-10-02T21:16:07Z",
+ "order": [
+  "challenge:credit-line",
+  "file:DS11",
+  "file:DS01",
+  "resolve:DS01",
+  "contest:DS01"
+ ],
+ "raw_base": "https://raw.githubusercontent.com/Hemmy1417/DecisionShield/10c852c3c06405055edddffc45fbd82d3c9bf907/fixtures/",
+ "started_at": "2026-10-02T21:11:29Z",
+ "steps": {
+  "challenge:credit-line": {
+   "args": [
+    "{\"contest_window\": 900, \"decision_rule\": \"An application is approved when the debt-to-income ratio is at or below 40 percent and no account is in active default; otherwise it is declined.\", \"decision_... (1119 characters)"
+   ],
+   "at": "2026-10-02T21:12:21Z",
+   "challenge_id": "DS-000001",
+   "kind": "write",
+   "leader_execution": "SUCCESS",
+   "method": "publish_challenge",
+   "rounds": 1,
+   "status": "FINALIZED",
+   "step": "challenge:credit-line",
+   "tx": "0x48f62d8302db99fdfe5071d305788fb3721f44468c8adfb7e9b7728bcab06032",
+   "votes": [
+    "agree",
+    "agree",
+    "agree",
+    "agree",
+    "agree"
+   ],
+   "wallet": "publisher"
+  },
+  "contest:DS01": {
+   "args": [
+    "DC-000002"
+   ],
+   "at": "2026-10-02T21:16:07Z",
+   "criteria": {
+    "decision_recorded": true,
+    "explanation_supported": false,
+    "prohibited_factor_detected": true,
+    "rule_followed": false,
+    "violation_condition_met": true
+   },
+   "evidence_status": "EVIDENCE_CONTRADICTORY",
+   "expected_reason": "VIOLATION_CONDITION_MET",
+   "expected_verdict": "a second reading, superseding the first",
+   "held": true,
+   "kind": "write",
+   "leader_execution": "SUCCESS",
+   "markers": [],
+   "method": "contest",
+   "note": "31 percent and no defaults required an approval; the system declined, naming the age band as its top factor, and its explanation claims a ratio problem the inputs do not show",
+   "observed_reason": "EVIDENCE_CONTRADICTORY",
+   "observed_verdict": "INCONCLUSIVE",
+   "panel_state": "ASSESSED",
+   "readings": {
+    "DECISION_RECORDED": "MATCHES",
+    "DECISION_RULE": "BROKEN",
+    "EVIDENCE_CONSISTENCY": "CONTRADICTORY",
+    "EXPLANATION": "CONTRADICTED",
+    "PROHIBITED_FACTOR": "USED",
+    "VIOLATION_CONDITION": "MET"
+   },
+   "resolution_id": "DR-000002",
+   "round": 2,
+   "rounds": 1,
+   "severity": "",
+   "status": "FINALIZED",
+   "step": "contest:DS01",
+   "submission_id": "DC-000002",
+   "supersedes": "DR-000001",
+   "tx": "0x0461b1f35550e0ddfaf4388cf5f5d71ae05532208f67342952bab84af5596e0f",
+   "votes": [
+    "agree",
+    "agree",
+    "agree",
+    "idle",
+    "idle"
+   ],
+   "wallet": "publisher"
+  },
+  "file:DS01": {
+   "args": [
+    "DS-000001",
+    "9c2393f6e4868b635fed3bce2b2f5516bb562215f37dfd5be4167a7cc81fe34c",
+    "2026-09",
+    "d2de04db567c4fc0f7ee14d694fc7202a08388efd400de1240755e25fdce030d",
+    "APP-0007",
+    "A synthetic credit line application and the decision recorded for it.",
+    "DECLINE",
+    "Declined because the debt-to-income ratio exceeds the policy limit.",
+    "PROHIBITED_FACTOR_USE",
+    "[{\"url\": \"https://cdn.jsdelivr.net/gh/Hemmy1417/DecisionShield@10c852c3c06405055edddffc45fbd82d3c9bf907/fixtures/evidence/app-0007-inputs.json\", \"kind\": \"PINNED\", \"role\": \"CASE_INPUT\", \"sha256\": \"572f... (891 characters)"
+   ],
+   "at": "2026-10-02T21:13:48Z",
+   "kind": "write",
+   "leader_execution": "SUCCESS",
+   "method": "submit_case",
+   "rounds": 1,
+   "status": "FINALIZED",
+   "step": "file:DS01",
+   "submission_id": "DC-000002",
+   "tx": "0xbe00e663f3939179b6a1f36a3c30d31b0ab8f84fafda42c51e4b692328898bef",
+   "votes": [
+    "agree",
+    "agree",
+    "idle",
+    "agree",
+    "idle"
+   ],
+   "wallet": "t01"
+  },
+  "file:DS11": {
+   "args": [
+    "DS-000001",
+    "9c2393f6e4868b635fed3bce2b2f5516bb562215f37dfd5be4167a7cc81fe34c",
+    "2026-09",
+    "d2de04db567c4fc0f7ee14d694fc7202a08388efd400de1240755e25fdce030d",
+    "APP-0007",
+    "A synthetic credit line application and the decision recorded for it.",
+    "DECLINE",
+    "Declined because the debt-to-income ratio exceeds the policy limit.",
+    "PROHIBITED_FACTOR_USE",
+    "[{\"url\": \"https://cdn.jsdelivr.net/gh/Hemmy1417/DecisionShield@10c852c3c06405055edddffc45fbd82d3c9bf907/fixtures/evidence/app-0007-inputs.json\", \"kind\": \"PINNED\", \"role\": \"CASE_INPUT\", \"sha256\": \"572f... (591 characters)"
+   ],
+   "at": "2026-10-02T21:13:04Z",
+   "kind": "write",
+   "leader_execution": "SUCCESS",
+   "method": "submit_case",
+   "rounds": 1,
+   "status": "FINALIZED",
+   "step": "file:DS11",
+   "submission_id": "DC-000001",
+   "tx": "0x5e78335d76551484f5afe9944c6d49a4be3c2cbbc02c5c5ba55dd0e7b3b27661",
+   "votes": [
+    "idle",
+    "agree",
+    "idle",
+    "agree",
+    "agree"
+   ],
+   "wallet": "t11"
+  },
+  "resolve:DS01": {
+   "args": [
+    "DC-000002"
+   ],
+   "at": "2026-10-02T21:14:58Z",
+   "criteria": {
+    "decision_recorded": true,
+    "explanation_supported": false,
+    "prohibited_factor_detected": true,
+    "rule_followed": false,
+    "violation_condition_met": true
+   },
+   "evidence_status": "EVIDENCE_CONTRADICTORY",
+   "expected_reason": "VIOLATION_CONDITION_MET",
+   "expected_verdict": "POLICY_VIOLATION_CONFIRMED",
+   "held": false,
+   "kind": "write",
+   "leader_execution": "SUCCESS",
+   "markers": [],
+   "method": "resolve",
+   "note": "31 percent and no defaults required an approval; the system declined, naming the age band as its top factor, and its explanation claims a ratio problem the inputs do not show",
+   "observed_reason": "EVIDENCE_CONTRADICTORY",
+   "observed_verdict": "INCONCLUSIVE",
+   "panel_state": "ASSESSED",
+   "readings": {
+    "DECISION_RECORDED": "MATCHES",
+    "DECISION_RULE": "BROKEN",
+    "EVIDENCE_CONSISTENCY": "CONTRADICTORY",
+    "EXPLANATION": "CONTRADICTED",
+    "PROHIBITED_FACTOR": "USED",
+    "VIOLATION_CONDITION": "MET"
+   },
+   "resolution_id": "DR-000001",
+   "round": 1,
+   "rounds": 1,
+   "severity": "",
+   "status": "FINALIZED",
+   "step": "resolve:DS01",
+   "submission_id": "DC-000002",
+   "supersedes": "",
+   "tx": "0x3e667d16a6d7aa118cf0713f95eecdfdb6cdc7df9929f748e8ab520bf2f0f14b",
+   "votes": [
+    "agree",
+    "idle",
+    "agree",
+    "agree",
+    "idle"
+   ],
+   "wallet": "keeper"
+  }
+ },
+ "summary": {
+  "missed": [
+   "resolve:DS01"
+  ],
+  "outcomes_checked": 2,
+  "outcomes_held": 1,
+  "refusals": 0,
+  "refusals_held": 0,
+  "steps": 5,
+  "transactions": 5
+ }
+}

@@ -1,0 +1,16 @@
+22:11:39 contract 0x99612D2DD20AEf6154ff737a22a74baEa50f5a5b phase full
+22:11:39 phase challenges
+22:11:39   challenge:credit-line: publish_challenge as publisher
+22:12:17     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+22:12:21     credit-line -> DS-000001
+22:12:21 phase cases
+22:12:22   file:DS11: submit_case as t11
+22:13:01     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+22:13:06   file:DS01: submit_case as t01
+22:13:45     FINALIZED/SUCCESS votes agree,agree,idle,agree,idle
+22:13:48   resolve:DS01: resolve as keeper
+22:14:57     FINALIZED/SUCCESS votes agree,idle,agree,agree,idle
+22:14:58     DS01: INCONCLUSIVE/EVIDENCE_CONTRADICTORY MISSED
+22:14:58   contest:DS01: contest as publisher
+22:16:06     FINALIZED/SUCCESS votes agree,agree,agree,idle,idle
+22:16:07     DS01:contest: INCONCLUSIVE/EVIDENCE_CONTRADICTORY HELD

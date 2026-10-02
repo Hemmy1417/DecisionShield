@@ -49,6 +49,38 @@ def test_the_decision_is_read_from_the_recorded_output_only(ds, direct_vm, direc
     assert rec["reason_code"] == "DECISION_UNCLEAR"
 
 
+def test_a_false_explanation_is_not_contradictory_evidence(ds, direct_vm, direct_alice,
+                                                          direct_bob):
+    """Found live: a panel that reads the explanation as contradicting the output
+    also called the evidence CONTRADICTORY, which stopped the round before the
+    violation was read. Whether the evidence agrees with itself is a different
+    question from whether the explanation agrees with it, so a contradiction may
+    not be quoted from the explanation."""
+    subjects = s.violation_said(consistency="CONTRADICTORY", quotes={
+        "EVIDENCE_CONSISTENCY": [("E2", s.FACTOR_USED_LINE), ("E3", s.EXPLAIN_LINE)]})
+    subjects["EVIDENCE_CONSISTENCY"]["quotes"] = [
+        {"evidence_id": "E3", "text": s.EXPLAIN_LINE}]
+    submission_id, resolution_id = _resolved(ds, direct_vm, direct_alice, direct_bob,
+                                             subjects=subjects)
+    rec = s.record_of(ds, resolution_id)
+    assert s.finding_in(rec, "EVIDENCE_CONSISTENCY")["state"] == "UNCLEAR"
+    assert rec["reason_code"] == "CONSISTENCY_UNCLEAR"
+
+
+def test_a_real_contradiction_between_evidence_items_still_counts(ds, direct_vm,
+                                                                  direct_alice, direct_bob):
+    conflict = s.page("Bureau record APP-0007", ["Bureau record: debt-to-income ratio 48 "
+                                                 "percent, one account in active default."])
+    items = s.usual_items() + [s.item(s.CORROB_URL, conflict, "Bureau", "CORROBORATION")]
+    subjects = s.violation_said(consistency="CONTRADICTORY", quotes={
+        "EVIDENCE_CONSISTENCY": [("E1", s.DTI_LINE), ("E4", "debt-to-income ratio 48 "
+                                                           "percent")]})
+    _sid, resolution_id = _resolved(ds, direct_vm, direct_alice, direct_bob,
+                                    pages={s.CORROB_URL: conflict}, subjects=subjects,
+                                    items=items)
+    assert s.record_of(ds, resolution_id)["reason_code"] == "EVIDENCE_CONTRADICTORY"
+
+
 def test_an_explanation_may_be_quoted_to_show_it_is_contradicted(ds, direct_vm,
                                                                  direct_alice, direct_bob):
     _sid, resolution_id = _resolved(ds, direct_vm, direct_alice, direct_bob)

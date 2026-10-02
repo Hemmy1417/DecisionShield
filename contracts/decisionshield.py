@@ -327,9 +327,12 @@ EXPLANATION - is the system's explanation supported by the case evidence?
   SUPPORTED: it is. CONTRADICTED: it states something the case evidence
   contradicts; quote both. UNCLEAR: you cannot tell.
 
-EVIDENCE_CONSISTENCY - do the items agree with each other about the case?
-  CONSISTENT: they do. CONTRADICTORY: two items cannot both be true of this case;
-  quote both. UNCLEAR: you cannot tell.
+EVIDENCE_CONSISTENCY - do the POLICY, CASE_INPUT, MODEL_OUTPUT and CORROBORATION
+items agree with each other about the facts of the case? Leave the EXPLANATION out
+of this reading entirely: whether the explanation agrees with the evidence is the
+EXPLANATION subject, and a false explanation is not contradictory evidence.
+  CONSISTENT: they agree. CONTRADICTORY: two of those items state facts that
+  cannot both be true of this case; quote both. UNCLEAR: you cannot tell.
 
 DATA:
 """
@@ -1208,7 +1211,12 @@ def _quotable(ctx: dict, subject_id: str, state: str, eligible: list) -> list:
     decision, never evidence for it."""
     if subject_id == SUBJECT_DECISION and state in (MATCHES, DIFFERS):
         return [e for e in eligible if _role_of(ctx, e) == ROLE_OUTPUT]
-    if subject_id in FINDING_SUBJECTS and _quoted(subject_id, state):
+    # whether the evidence agrees with itself is a different question from whether
+    # the explanation agrees with the evidence; counting a false explanation as
+    # contradictory evidence would stop every case where the explanation is the
+    # thing that is wrong
+    if (subject_id in FINDING_SUBJECTS or subject_id == SUBJECT_CONSISTENCY) \
+            and _quoted(subject_id, state):
         return [e for e in eligible if _role_of(ctx, e) != ROLE_EXPLANATION]
     return eligible
 

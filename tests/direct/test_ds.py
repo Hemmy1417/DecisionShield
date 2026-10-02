@@ -177,8 +177,10 @@ def test_a_policy_that_changed_since_the_challenge_is_evidence_unavailable(
 def test_an_unpublished_policy_is_evidence_unavailable(ds, direct_vm, direct_alice,
                                                        direct_bob):
     challenge_id, _c = s.ready(ds, direct_vm, direct_alice, pages={s.POLICY_URL: None})
-    submission_id, _r = s.resolved(ds, direct_vm, direct_bob, challenge_id)
+    submission_id, resolution_id = s.resolved(ds, direct_vm, direct_bob, challenge_id)
     assert verdict(ds, submission_id) == ("EVIDENCE_UNAVAILABLE", "POLICY_UNREADABLE")
+    policy = s.source_in(s.record_of(ds, resolution_id), "P")
+    assert (policy["status"], policy["http_status"]) == ("NOT_FOUND", 404)
 
 
 def test_a_required_role_that_cannot_be_read_is_evidence_unavailable(ds, direct_vm,
