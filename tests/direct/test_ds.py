@@ -281,6 +281,45 @@ def test_a_broken_rule_without_the_declared_violation_is_a_conflict(ds, direct_v
     assert verdict(ds, submission_id) == ("INCONCLUSIVE", "CRITERIA_CONFLICT")
 
 
+def test_each_failed_criterion_alone_blocks_compliance(ds, direct_vm, direct_alice,
+                                                      direct_bob, direct_accounts):
+    """A rule followed and the violation not met is still not compliance when a
+    prohibited factor was used, or the explanation is contradicted."""
+    challenge_id, _c = s.ready(ds, direct_vm, direct_alice, pages=s.COMPLIANT_PAGES)
+    for index, change in enumerate(({"factor": "USED", "quotes": {
+            "DECISION_RULE": [("E1", s.HIGH_DTI_LINE), ("E2", s.DECISION_LINE)],
+            "PROHIBITED_FACTOR": [("E1", "Applicant age band: 60 to 69")]}},
+            {"explanation": "CONTRADICTED", "quotes": {
+                "DECISION_RULE": [("E1", s.HIGH_DTI_LINE), ("E2", s.DECISION_LINE)],
+                "EXPLANATION": [("E3", s.EXPLAIN_LINE)]}})):
+        subjects = s.compliant_said(**change)
+        submission_id, _r = s.resolved(ds, direct_vm, direct_accounts[index + 2],
+                                       challenge_id, subjects=subjects,
+                                       items=s.compliant_items())
+        assert verdict(ds, submission_id) == ("INCONCLUSIVE", "CRITERIA_CONFLICT"), change
+
+
+def test_a_cancelled_challenge_takes_no_case(ds, direct_vm, direct_alice, direct_bob):
+    challenge_id, _c = s.ready(ds, direct_vm, direct_alice)
+    direct_vm.sender = direct_alice
+    ds.cancel_challenge(challenge_id)
+    with direct_vm.expect_revert("the challenge was cancelled"):
+        s.filed(ds, direct_vm, direct_bob, challenge_id)
+
+
+def test_a_live_item_stores_nothing_that_was_not_compared(ds, direct_vm, direct_alice,
+                                                          direct_bob):
+    challenge_id, _c = s.ready(ds, direct_vm, direct_alice)
+    items = s.usual_items() + [s.item(s.LIVE_URL, s.OUTPUT, "Live view", "CORROBORATION",
+                                      kind="LIVE")]
+    _sid, resolution_id = s.resolved(ds, direct_vm, direct_bob, challenge_id, items=items)
+    live = s.source_in(s.record_of(ds, resolution_id), "E4")
+    assert live["status"] == "RETRIEVED" and live["compared"] is False
+    for key in ("raw_sha256", "content_digest", "byte_count", "declared_sha256"):
+        assert key not in live, key
+    assert s.source_in(s.record_of(ds, resolution_id), "E1")["compared"] is True
+
+
 def test_an_unclear_criterion_blocks_compliance(ds, direct_vm, direct_alice, direct_bob):
     challenge_id, _c = s.ready(ds, direct_vm, direct_alice, pages=s.COMPLIANT_PAGES)
     submission_id, _r = s.resolved(ds, direct_vm, direct_bob, challenge_id,

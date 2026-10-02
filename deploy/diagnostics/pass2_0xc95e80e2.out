@@ -1,0 +1,101 @@
+22:19:46 contract 0xc95E80E2a1bDe77A2e8aCB18fcaa374a6385cBf0 phase full
+22:19:46 phase challenges
+22:19:46   challenge:credit-line: publish_challenge as publisher
+22:20:26     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+22:20:29     credit-line -> DS-000001
+22:20:29 phase cases
+22:20:30   file:DS11: submit_case as t11
+22:21:14     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+22:21:20   file:DS01: submit_case as t01
+22:22:00     FINALIZED/SUCCESS votes agree,agree,idle,idle,agree
+22:22:04   resolve:DS01: resolve as keeper
+22:24:09     FINALIZED/SUCCESS votes agree,agree,agree,idle,idle
+22:24:11     DS01: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+22:24:11   contest:DS01: contest as publisher
+22:25:18     FINALIZED/SUCCESS votes disagree,agree,idle,agree,agree
+22:25:20     DS01:contest: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+22:25:22   file:DS02: submit_case as t02
+22:26:00     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+22:26:03   resolve:DS02: resolve as keeper
+22:27:16     FINALIZED/SUCCESS votes disagree,agree,agree,agree,idle
+22:27:18     DS02: POLICY_COMPLIANT/RULE_FOLLOWED HELD
+22:27:19   file:DS03: submit_case as t03
+22:28:03     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+22:28:09   resolve:DS03: resolve as keeper
+22:29:10     FINALIZED/SUCCESS votes agree,agree,idle,idle,agree
+22:29:12     DS03: INCONCLUSIVE/DECISION_NOT_RECORDED HELD
+22:29:14   file:DS04: submit_case as t04
+22:29:52     FINALIZED/SUCCESS votes agree,agree,idle,agree,idle
+22:29:55   resolve:DS04: resolve as keeper
+22:30:56     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+22:30:57     DS04: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+22:30:59   file:DS05: submit_case as t05
+22:31:43     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+22:31:46   resolve:DS05: resolve as keeper
+22:33:21     FINALIZED/SUCCESS votes agree,idle,agree,agree,idle
+22:33:23     DS05: INCONCLUSIVE/CRITERIA_CONFLICT HELD
+22:33:25   file:DS06: submit_case as t06
+22:34:09     FINALIZED/SUCCESS votes agree,agree,agree,idle,idle
+22:34:13   resolve:DS06: resolve as keeper
+22:35:31     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+22:35:33     DS06: INCONCLUSIVE/EVIDENCE_CONTRADICTORY HELD
+22:35:35   file:DS07: submit_case as t07
+22:36:13     FINALIZED/SUCCESS votes agree,idle,idle,agree,agree
+22:36:17   resolve:DS07: resolve as keeper
+22:37:02     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+22:37:03     DS07: INCONCLUSIVE/SOURCE_ADDRESSES_ADJUDICATOR HELD
+22:37:05   file:DS08: submit_case as t08
+22:37:43     FINALIZED/SUCCESS votes agree,agree,idle,agree,idle
+22:37:47   resolve:DS08: resolve as keeper
+22:38:30     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+22:38:32     DS08: EVIDENCE_UNAVAILABLE/EVIDENCE_DIGEST_MISMATCH HELD
+22:38:34   file:DS09: submit_case as t09
+22:39:16     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+22:39:19   resolve:DS09: resolve as keeper
+22:40:03     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+22:40:05     DS09: EVIDENCE_UNAVAILABLE/REQUIRED_EVIDENCE_UNREADABLE HELD
+22:40:06   file:DS10: submit_case as t10
+22:40:45     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+22:40:48   resolve:DS10: resolve as keeper
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+22:42:00     FINALIZED/SUCCESS votes agree,agree,idle,agree,disagree
+22:42:01     DS10: INCONCLUSIVE/BYTES_NOT_BOUND HELD
+22:42:01 phase settle
+22:42:03   finalize:DS01: finalize as keeper
+22:42:42     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+22:42:46     DS01 consumer view: confirmed=True compliant=False HELD
+22:42:47   finalize:DS02: finalize as keeper
+    rpc transient on eth_estimateGas (1/8): Request to https://studio.genlayer.com/api failed: ('Connection aborted.', RemoteDisconnec; retry in 5s
+22:43:31     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+22:43:35     DS02 consumer view: confirmed=False compliant=True HELD
+22:43:36   waiting 421s for the resolve window of DC-000001
+22:45:36   waiting 301s for the resolve window of DC-000001
+22:47:36   waiting 181s for the resolve window of DC-000001
+22:49:36   waiting 61s for the resolve window of DC-000001
+22:50:38   lapse:DS11: lapse_case as keeper
+22:51:16     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+22:51:20   stats: {"challenges": 1, "resolutions": 11, "submissions": 11, "violations_confirmed": 2}
+22:51:20 phase refusals
+22:51:21   refuse:stale_policy_version: expecting a refusal of submit_case
+22:52:00     refused
+22:52:00   refuse:policy_hash_mismatch: expecting a refusal of submit_case
+22:52:39     refused
+22:52:39   refuse:personal_identifier: expecting a refusal of submit_case
+22:53:23     refused
+22:53:23   refuse:email_in_summary: expecting a refusal of submit_case
+22:54:02     refused
+22:54:02   refuse:outside_domains: expecting a refusal of submit_case
+22:54:40     refused
+22:54:40   refuse:explanation_addresses_adjudicator: expecting a refusal of submit_case
+22:55:18     refused
+22:55:18   refuse:second_case_same_tester: expecting a refusal of submit_case
+22:55:57     refused
+22:55:57   refuse:cancel_with_cases: expecting a refusal of cancel_challenge
+22:56:36     refused
+22:56:36   refuse:double_resolution: expecting a refusal of resolve
+22:57:20     refused
+22:57:20   refuse:stranger_contest: expecting a refusal of contest
+22:58:04     refused
+22:58:04   refuse:stranger_withdraw: expecting a refusal of withdraw_case
+22:58:43     refused
+22:58:43 summary {"steps": 37, "transactions": 37, "outcomes_checked": 14, "outcomes_held": 14, "missed": [], "refusals": 11, "refusals_held": 11}
