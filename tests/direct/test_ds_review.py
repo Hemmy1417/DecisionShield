@@ -28,8 +28,12 @@ def test_unavailable_evidence_leaves_the_case_pending(ds, direct_vm, direct_alic
     assert ds.get_verdict(submission_id)["verdict"] == "EVIDENCE_UNAVAILABLE"
     with direct_vm.expect_revert("only a RESOLVED case is contested"):
         ds.contest(submission_id)
-    # the host comes back inside the window: the case is read after all
+    # the host comes back inside the window: the case is read after all. The
+    # retries are the tester's - nobody else can spend them
     _restore(direct_vm)
+    with direct_vm.expect_revert("only the tester resolves again"):
+        ds.resolve(submission_id)
+    direct_vm.sender = direct_bob
     ds.resolve(submission_id)
     verdict = ds.get_verdict(submission_id)
     assert verdict["verdict"] == "POLICY_VIOLATION_CONFIRMED"
@@ -97,52 +101,27 @@ def test_a_withdrawn_case_may_be_filed_again_but_a_live_one_may_not(
 
 # -- binding is a property of the case ------------------------------------------
 
-def test_compliance_cannot_rest_on_live_inputs_quoted_through_the_policy(
-        ds, direct_vm, direct_alice, direct_bob):
-    challenge_id, _c = s.ready(ds, direct_vm, direct_alice, pages=s.COMPLIANT_PAGES)
-    items = [s.item(s.CASE_URL, s.HIGH_DTI_CASE, "Application inputs", "CASE_INPUT",
-                    kind="LIVE"),
-             s.item(s.OUTPUT_URL, s.DTI_OUTPUT, "Recorded decision", "MODEL_OUTPUT"),
-             s.item(s.EXPLAIN_URL, s.EXPLANATION, "System explanation", "EXPLANATION")]
-    subjects = s.compliant_said(quotes={"DECISION_RULE": [("P", s.RULE_LINE),
-                                                          ("E2", s.DECISION_LINE)]})
-    _sid, resolution_id = s.resolved(ds, direct_vm, direct_bob, challenge_id,
-                                     subjects=subjects, items=items)
-    record = s.record_of(ds, resolution_id)
-    assert (record["verdict"], record["reason_code"]) == ("INCONCLUSIVE", "BYTES_NOT_BOUND")
-
-
-def test_a_violation_cannot_rest_on_live_inputs_quoted_through_the_policy(
-        ds, direct_vm, direct_alice, direct_bob):
+def test_an_unpinned_item_is_refused_at_filing_under_any_label(ds, direct_vm, direct_alice,
+                                                              direct_bob):
+    """An item nobody pinned is unbound evidence whatever role it is given, so a
+    case may not declare one: the panel would read it, and its host could change
+    it between rounds."""
     challenge_id, _c = s.ready(ds, direct_vm, direct_alice)
-    items = [s.item(s.CASE_URL, s.CASE, "Application inputs", "CASE_INPUT", kind="LIVE"),
-             s.item(s.OUTPUT_URL, s.OUTPUT, "Recorded decision", "MODEL_OUTPUT"),
-             s.item(s.EXPLAIN_URL, s.EXPLANATION, "System explanation", "EXPLANATION")]
-    subjects = s.violation_said(quotes={"VIOLATION_CONDITION": [("P", s.RULE_LINE)]})
-    _sid, resolution_id = s.resolved(ds, direct_vm, direct_bob, challenge_id,
-                                     subjects=subjects, items=items)
-    record = s.record_of(ds, resolution_id)
-    assert (record["verdict"], record["reason_code"]) == ("INCONCLUSIVE", "BYTES_NOT_BOUND")
+    for role in ("CASE_INPUT", "MODEL_OUTPUT", "EXPLANATION", "CORROBORATION"):
+        items = s.usual_items() + [dict(s.item(s.CORROB_URL, s.BUREAU, "Live", role),
+                                        kind="LIVE", sha256="")]
+        with direct_vm.expect_revert("kind must be one of: PINNED"):
+            s.filed(ds, direct_vm, direct_bob, challenge_id, items=items)
+    assert ds.get_config()["evidence_kinds"] == ["PINNED"]
 
 
-def test_a_live_explanation_does_not_unbind_a_case(ds, direct_vm, direct_alice, direct_bob):
-    challenge_id, _c = s.ready(ds, direct_vm, direct_alice)
-    items = s.usual_items()[:2] + [s.item(s.EXPLAIN_URL, s.EXPLANATION,
-                                          "System explanation", "EXPLANATION", kind="LIVE")]
-    _sid, resolution_id = s.resolved(ds, direct_vm, direct_bob, challenge_id, items=items)
-    assert s.record_of(ds, resolution_id)["verdict"] == "POLICY_VIOLATION_CONFIRMED"
 
 
-def test_quote_choice_no_longer_decides_whether_a_case_is_bound(
-        ds, direct_vm, direct_alice, direct_bob):
-    challenge_id, _c = s.ready(ds, direct_vm, direct_alice)
-    items = s.usual_items() + [s.item(s.CORROB_URL, s.BUREAU, "Bureau record",
-                                      "CORROBORATION", kind="LIVE")]
-    _sid, resolution_id = s.resolved(ds, direct_vm, direct_bob, challenge_id, items=items)
-    assert s.record_of(ds, resolution_id)["reason_code"] == "BYTES_NOT_BOUND"
-    s.panel(direct_vm, s.violation_said(quotes={"VIOLATION_CONDITION": [
-        ("E4", s.BUREAU_LINE)]}))
-    assert s.replay(direct_vm) is True
+
+
+
+
+
 
 
 # -- criteria nobody compared are not served ------------------------------------
@@ -253,7 +232,7 @@ def test_prohibited_factors_pass_the_privacy_guard(mod):
 def test_an_evidence_url_may_not_carry_an_email_address(mod):
     _e, spec = mod._parse_challenge(json.dumps(s.challenge()))
     items = s.usual_items() + [s.item("https://records.example.org/r?to=jane@corp.com", "x",
-                                      "Other", "CORROBORATION", kind="LIVE")]
+                                      "Other", "CORROBORATION")]
     assert "email address" in mod._evidence_error(items, spec)
 
 

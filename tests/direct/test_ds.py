@@ -307,17 +307,13 @@ def test_a_cancelled_challenge_takes_no_case(ds, direct_vm, direct_alice, direct
         s.filed(ds, direct_vm, direct_bob, challenge_id)
 
 
-def test_a_live_item_stores_nothing_that_was_not_compared(ds, direct_vm, direct_alice,
-                                                          direct_bob):
+def test_a_source_record_keeps_what_was_compared(ds, direct_vm, direct_alice, direct_bob):
     challenge_id, _c = s.ready(ds, direct_vm, direct_alice)
-    items = s.usual_items() + [s.item(s.LIVE_URL, s.OUTPUT, "Live view", "CORROBORATION",
-                                      kind="LIVE")]
-    _sid, resolution_id = s.resolved(ds, direct_vm, direct_bob, challenge_id, items=items)
-    live = s.source_in(s.record_of(ds, resolution_id), "E4")
-    assert live["status"] == "RETRIEVED" and live["compared"] is False
+    _sid, resolution_id = s.resolved(ds, direct_vm, direct_bob, challenge_id)
+    pinned = s.source_in(s.record_of(ds, resolution_id), "E1")
+    assert pinned["status"] == "RETRIEVED" and pinned["compared"] is True
     for key in ("raw_sha256", "content_digest", "byte_count", "declared_sha256"):
-        assert key not in live, key
-    assert s.source_in(s.record_of(ds, resolution_id), "E1")["compared"] is True
+        assert key in pinned, key
 
 
 def test_an_unclear_criterion_blocks_compliance(ds, direct_vm, direct_alice, direct_bob):
@@ -328,23 +324,33 @@ def test_an_unclear_criterion_blocks_compliance(ds, direct_vm, direct_alice, dir
     assert verdict(ds, submission_id) == ("INCONCLUSIVE", "CRITERIA_UNCLEAR")
 
 
+def _as_if_unpinned(ds, vm, mod, challenge_id, submission_id, evidence_id):
+    """The round's own context and payload, with one item declared LIVE - a state
+    filing refuses, rebuilt here to show the guard behind the refusal holds."""
+    ctx = {"challenge": ds.get_challenge(challenge_id)["challenge"],
+           "evidence": [dict(item, kind="LIVE") if item["evidence_id"] == evidence_id
+                        else item for item in ds.get_submission(submission_id)["evidence"]]}
+    return mod._verdict_for(ctx, s.leader_payload(vm))
+
+
 def test_a_violation_resting_on_unbound_bytes_is_inconclusive(ds, direct_vm, direct_alice,
-                                                              direct_bob):
+                                                              direct_bob, mod):
     challenge_id, _c = s.ready(ds, direct_vm, direct_alice)
-    items = [s.item(s.CASE_URL, s.CASE, "Inputs", "CASE_INPUT", kind="LIVE"),
-             s.item(s.OUTPUT_URL, s.OUTPUT, "Decision", "MODEL_OUTPUT", kind="LIVE")]
-    submission_id, _r = s.resolved(ds, direct_vm, direct_bob, challenge_id, items=items)
-    assert verdict(ds, submission_id) == ("INCONCLUSIVE", "BYTES_NOT_BOUND")
+    submission_id, _r = s.resolved(ds, direct_vm, direct_bob, challenge_id)
+    assert verdict(ds, submission_id)[0] == "POLICY_VIOLATION_CONFIRMED"
+    for evidence_id in ("E1", "E2", "E3"):
+        assert _as_if_unpinned(ds, direct_vm, mod, challenge_id, submission_id,
+                               evidence_id) == ("INCONCLUSIVE", "BYTES_NOT_BOUND")
 
 
 def test_compliance_resting_on_unbound_bytes_is_inconclusive(ds, direct_vm, direct_alice,
-                                                             direct_bob):
+                                                             direct_bob, mod):
     challenge_id, _c = s.ready(ds, direct_vm, direct_alice, pages=s.COMPLIANT_PAGES)
-    items = [s.item(s.CASE_URL, s.HIGH_DTI_CASE, "Inputs", "CASE_INPUT", kind="LIVE"),
-             s.item(s.OUTPUT_URL, s.DTI_OUTPUT, "Decision", "MODEL_OUTPUT")]
     submission_id, _r = s.resolved(ds, direct_vm, direct_bob, challenge_id,
-                                   subjects=s.compliant_said(), items=items)
-    assert verdict(ds, submission_id) == ("INCONCLUSIVE", "BYTES_NOT_BOUND")
+                                   subjects=s.compliant_said(), items=s.compliant_items())
+    assert verdict(ds, submission_id)[0] == "POLICY_COMPLIANT"
+    assert _as_if_unpinned(ds, direct_vm, mod, challenge_id, submission_id, "E1") == \
+        ("INCONCLUSIVE", "BYTES_NOT_BOUND")
 
 
 # -- windows, contest, finality ------------------------------------------------
@@ -374,7 +380,7 @@ def test_a_contest_is_a_second_reading_of_the_same_bytes(ds, direct_vm, direct_a
     rec = s.record_of(ds, second)
     assert rec["mode"] == "CONTEST" and rec["round"] == 2 and rec["supersedes"] == first
     assert verdict(ds, submission_id)[0] == "POLICY_VIOLATION_CONFIRMED"
-    with direct_vm.expect_revert("contested once already"):
+    with direct_vm.expect_revert("this party has contested this case once already"):
         ds.contest(submission_id)
 
 
@@ -421,7 +427,8 @@ def test_the_actions_and_evidence_views(ds, direct_vm, direct_alice, direct_bob)
     after = ds.get_evidence_status(submission_id)
     assert [i["status"] for i in after["items"]] == ["RETRIEVED"] * 4
     assert after["evidence_status"] == "EVIDENCE_REACHABLE"
-    assert ds.get_actions(submission_id, s.NOW)["may_contest"] is True
+    assert ds.get_actions(submission_id, s.NOW)["may_contest"] == \
+        {"tester": True, "publisher": True}
     assert ds.get_actions(submission_id, LATER)["may_finalize"] is True
     history = ds.get_history(submission_id)["rounds"]
     assert history[0]["severity"] == "HIGH"

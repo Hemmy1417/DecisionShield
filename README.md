@@ -78,7 +78,7 @@ met" - consensus supplies it, and nothing else.
 | thin LLM wrapper | the model never chooses the verdict: it returns per-subject readings, and code derives the verdict, severity and compliance flag |
 | generic AI app | one bounded question, typed outcomes, no UI, no chat |
 | format-only validator | each validator re-fetches, re-reads, re-grounds every quote in its own bytes and re-derives the verdict |
-| caller-authored evidence | the policy and every pinned item are bound to a sha256 the round re-checks; the explanation is never evidence |
+| caller-authored evidence | the policy and every item a case declares are pinned to a sha256 the round re-checks, an unpinned item is refused, and the explanation is never evidence |
 | toy storage | versioned challenges, bounded histories, a lifecycle with contest, finality and lapse |
 | full application | contract only, no frontend, no funds |
 
@@ -91,6 +91,10 @@ met" - consensus supplies it, and nothing else.
 | `MODEL_OUTPUT` | what it decided, as the system recorded it |
 | `EXPLANATION` | the system's own account of why |
 | `CORROBORATION` | an external record to check the case against |
+
+**Every item is pinned to the sha256 of its bytes**, and every item a case
+declares must be readable for a round to be read at all: a host cannot change a
+document, or choose which of its records the panel sees.
 
 **An AI system's explanation is a claim about its decision, never evidence for
 it.** No finding a verdict rests on may be quoted from it; the decision is read
@@ -109,9 +113,9 @@ PENDING
 ```
 
 `INCONCLUSIVE` and `EVIDENCE_UNAVAILABLE` are never collapsed into compliance or
-violation, and **both** positive verdicts need their deciding passages quoted
-from non-explanation evidence, in a case whose every evidence item is pinned to
-a sha256. Only the explanation, which is never evidence, may be unpinned.
+violation, and **both** positive verdicts need every declared item read whole
+and matching its pinned bytes, with their deciding passages quoted from
+non-explanation evidence.
 
 ```json
 {
@@ -136,25 +140,28 @@ publish_challenge ──► OPEN ──(deadline)──► CLOSED
         └─ cancel_challenge (publisher, before any case) ──► CANCELLED
 
 submit_case ──► PENDING ──resolve──► RESOLVED ──(contest window)──► finalize ──► FINAL
-               │ ▲  │ │                └─ contest (tester or publisher, once)
-               │ └──┘ │
+               │ ▲  │ │                └─ contest: one read contest per party;
+               │ └──┘ │                   every contest round restarts the window
                │  resolve with evidence unavailable: recorded, stays PENDING
-               │      └─ withdraw_case (tester) ──► CANCELLED
+               │  (five resolve rounds at most; after the first, the tester's)
+               │      └─ withdraw_case (tester, inside the window) ──► CANCELLED
                └─ lapse_case (anyone, after the resolve window)
                     ├─ never read           ──► CANCELLED
                     └─ evidence unavailable ──► FINAL, EVIDENCE_UNAVAILABLE
 ```
 
-An outage never ends a case early: a round that cannot read the evidence is
-recorded and the case stays open to be resolved again, and a contest round
-during an outage neither replaces the standing verdict nor spends the contest.
+An outage never ends a case early and never replaces a reading: a round that
+cannot read the evidence is recorded and the case stays open, and a contest
+round during an outage changes nothing and spends nothing. Each party has its
+own contest, so neither can use up the other's.
 
 | Step | Who |
 |---|---|
 | publish / cancel a challenge | the publisher - an operator's model-risk team, an auditor, a governance body |
 | submit / withdraw a case | the tester - a red team, model risk, an advocate |
-| resolve, finalize, lapse | anyone; the round decides, not the caller |
-| contest | the tester or the publisher, once |
+| resolve | anyone for the first round; the tester for a retry after a round that could not read the evidence |
+| finalize, lapse | anyone; the state decides, not the caller |
+| contest | the tester and the publisher, one read contest each |
 
 ## Contract surface
 
@@ -175,20 +182,23 @@ there: `get_challenge`, `get_submission`, `get_verdict`,
 ## Deterministic responsibilities
 
 Identity and authorisation; challenge and policy hashes and versions; URL and
-host admission; the privacy guard; one case per tester per challenge and ten open
-cases per tester; deadlines and windows from transaction time; digest checks on
-every retrieval; the marker scan for text addressed to the adjudicator; the code
-reasons that decide a round without the panel; quote grounding and the
+host admission; pinning of every evidence item; the privacy guard; one case per
+tester per challenge and ten open cases per tester; deadlines and windows from
+transaction time; digest checks on every retrieval; how the pinned bytes become
+the text the panel reads; the marker scan for text addressed to the adjudicator;
+the code reasons that decide a round without the panel; quote grounding and the
 which-item-may-be-quoted rule; the derivation of verdict, reason, severity,
-criteria and evidence status; contest, finality, lapse and withdrawal; bounded
-storage and pagination.
+criteria and evidence status; resolve retries, each party's contest, finality,
+lapse and withdrawal, with caps on every round; bounded storage and pagination.
 
 ## Validator design
 
 Each validator reproduces the round from its own retrieval and model call, gates
-the leader's payload against its own bytes, then compares what was retrieved and
-what it leads to: the verdict, the reason, and - for a positive verdict - every
-criterion. Notes and quote choice may differ. [`docs/CONSENSUS.md`](docs/CONSENSUS.md).
+the leader's payload against its own text, then compares what was retrieved and
+what it leads to: what each node could do with each item and the digest of its
+bytes, the verdict, the reason, and - for a positive verdict - every criterion.
+Notes, quote choice and HTTP details may differ, and every record says so.
+[`docs/CONSENSUS.md`](docs/CONSENSUS.md).
 
 ## Financial safety, privacy, and no false guarantees
 
@@ -196,9 +206,10 @@ criterion. Notes and quote choice may differ. [`docs/CONSENSUS.md`](docs/CONSENS
   management or professional oversight; no legal or regulatory certification.
 - A compliant verdict does not prove a model safe; a confirmed violation does not
   prove intent; a case without one does not prove no other exists.
-- Synthetic references only. Every free-text field passes a privacy guard that
-  refuses email addresses and long digit runs - a heuristic, documented as such.
-  No raw personal financial data is required or stored.
+- Synthetic references only. Every field a party writes passes a privacy guard
+  that refuses email addresses, long digit runs and digits grouped like a phone,
+  card or social-security number - a heuristic, documented as such. No raw
+  personal financial data is required or stored.
 
 [`docs/SECURITY.md`](docs/SECURITY.md).
 
@@ -209,14 +220,23 @@ criterion. Notes and quote choice may differ. [`docs/CONSENSUS.md`](docs/CONSENS
   evaluated - not proof of absolute truth about the model.
 - Honest-majority assumption over validators; where honest models split, no
   majority forms and nothing is stored.
-- Evidence availability depends on the hosts a challenge names; a host that goes
-  down makes a case `EVIDENCE_UNAVAILABLE`, never a verdict.
+- Evidence availability depends on the hosts a challenge names. An outage is
+  recorded, never a verdict; a host that stays down through a whole window ends
+  the case as `EVIDENCE_UNAVAILABLE`, and a party who controls a host can delay
+  finality by a bounded number of contest windows.
 - Readings are model judgements: notes and quote choice vary between validators,
   and only the fields listed under validator design are compared.
-- The marker scan and the privacy guard are heuristics: no perfect
-  prompt-injection or privacy guarantee.
-- Histories and pages are bounded; one contest per case.
-- A StudioNet deployment, not a production audit.
+- The marker scan and the privacy guard are heuristics, in both directions: no
+  perfect prompt-injection or privacy guarantee, and a document that genuinely
+  addresses "the adjudicator" stops rounds.
+- The panel reads the text content of the pinned bytes by one fixed rule, not as
+  a browser renders them, and at most 20,000 characters of an item; a longer item
+  cannot carry a positive verdict.
+- URL admission is hygiene, not SSRF protection: the validators' runtime egress
+  controls are the real boundary.
+- Histories, rounds and pages are bounded; one read contest per party.
+- A StudioNet deployment reviewed adversarially four times by its author's own
+  tooling - not an independent production audit.
 
 ## Reuse surface
 

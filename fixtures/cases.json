@@ -318,12 +318,13 @@
      "sha256": ""
     }
    ],
-   "expect_reason": "BYTES_NOT_BOUND",
-   "expect_verdict": "INCONCLUSIVE",
+   "expect_reason": "UNPINNED_EVIDENCE",
+   "expect_verdict": "REFUSED",
    "input_summary": "A synthetic credit line application and the decision recorded for it.",
-   "note": "the same violating case as DS01 on unbound bytes: a verdict may not rest on documents nobody pinned",
+   "note": "the same violating case as DS01 with nothing pinned: a case may not declare evidence that is not bound to its bytes, so it is refused at filing",
    "settle": false,
    "subject_reference": "APP-0007",
+   "unpinned": true,
    "wallet": "t10"
   },
   {

@@ -41,8 +41,13 @@ def test_every_challenge_parses(mod, name):
 def test_the_catalogue_is_coherent(mod):
     for case in CASES["cases"]:
         code = case["case"]
-        assert case["expect_verdict"] in mod.VERDICTS, code
-        assert case["expect_reason"] in mod.REASON_CODES, code
+        if case.get("unpinned"):
+            # the one case that is refused at filing: nothing in it is pinned
+            assert all(e["kind"] == "LIVE" for e in case["evidence"]), code
+            assert "LIVE" not in mod.EVIDENCE_KINDS
+        else:
+            assert case["expect_verdict"] in mod.VERDICTS, code
+            assert case["expect_reason"] in mod.REASON_CODES, code
         assert case["claimed_violation"] in mod.CLAIMED_VIOLATIONS, code
         for field, cap, newlines in (("subject_reference", mod.REFERENCE_CAP, False),
                                      ("input_summary", mod.SUMMARY_CAP, True),
@@ -56,14 +61,14 @@ def test_the_catalogue_is_coherent(mod):
 
 
 def test_every_verdict_and_code_reason_the_run_can_reach_is_exercised(mod):
-    verdicts = {c["expect_verdict"] for c in CASES["cases"]}
+    verdicts = {c["expect_verdict"] for c in CASES["cases"] if not c.get("unpinned")}
     assert verdicts == {"POLICY_VIOLATION_CONFIRMED", "POLICY_COMPLIANT", "INCONCLUSIVE",
                         "EVIDENCE_UNAVAILABLE", "CANCELLED"}
     reasons = {c["expect_reason"] for c in CASES["cases"]}
     for reason in ("VIOLATION_CONDITION_MET", "RULE_FOLLOWED", "DECISION_NOT_RECORDED",
                    "CRITERIA_CONFLICT", "EVIDENCE_CONTRADICTORY",
                    "SOURCE_ADDRESSES_ADJUDICATOR", "EVIDENCE_DIGEST_MISMATCH",
-                   "REQUIRED_EVIDENCE_UNREADABLE", "BYTES_NOT_BOUND", "LAPSED"):
+                   "REQUIRED_EVIDENCE_UNREADABLE", "LAPSED"):
         assert reason in reasons, reason
 
 

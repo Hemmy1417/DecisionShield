@@ -1,4 +1,4 @@
-# v0.2.1
+# v0.4.1
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
 # NOTE: the blank line above is load-bearing. GenVM reads the leading
@@ -46,6 +46,7 @@
 from genlayer import *
 
 import hashlib
+from html import unescape as _html_unescape
 import json
 import re
 from dataclasses import dataclass
@@ -53,9 +54,9 @@ from dataclasses import dataclass
 
 # == constants (surfaced by get_config) =======================================
 
-CONTRACT_VERSION = "0.2.1"
+CONTRACT_VERSION = "0.4.1"
 SCHEMA_VERSION = 1
-VERDICT_VERSION = 2
+VERDICT_VERSION = 4
 
 NAME_CAP = 120
 IDENTIFIER_CAP = 80
@@ -78,11 +79,13 @@ MAX_QUOTES = 3
 EXCERPT_CAP = 400
 CONTENT_TYPE_CAP = 100
 BODY_BYTES_CAP = 200000           # raw bytes read per item; beyond this it is PARTIAL
-TEXT_CAP = 9000                   # normalised characters the panel reads per item
+TEXT_CAP = 20000                  # normalised characters the panel reads per item
 MAX_EVIDENCE = 5                  # items one submission may declare, besides the policy
 MAX_FACTORS = 6
 MAX_DOMAINS = 4
 MAX_OPEN_PER_WALLET = 10
+MAX_RESOLVE_ROUNDS = 5            # resolve rounds one case may have
+MAX_CONTEST_ATTEMPTS = 3          # contest rounds each party may ask for
 PAGE_LIMIT = 50
 MIN_WINDOW = 60                   # seconds; every window is wall-clock
 MAX_WINDOW = 30 * 86400
@@ -94,8 +97,8 @@ DIGIT_RUN_LIMIT = 9               # this many digits in a row look like an accou
 # == vocabularies =============================================================
 
 KIND_PINNED = "PINNED"            # the submitter declared the sha256 of the bytes
-KIND_LIVE = "LIVE"                # bytes are not bound, and cannot carry a positive verdict
-EVIDENCE_KINDS = (KIND_PINNED, KIND_LIVE)
+KIND_LIVE = "LIVE"                # unbound bytes: refused at filing since v0.4.0
+EVIDENCE_KINDS = (KIND_PINNED,)   # every item a case declares is bound to its bytes
 
 ROLE_POLICY = "POLICY"            # only the challenge's own policy document carries this
 ROLE_CASE = "CASE_INPUT"
@@ -108,7 +111,8 @@ EVIDENCE_ROLES = (ROLE_POLICY,) + SUBMITTED_ROLES
 SEVERITIES = ("LOW", "MEDIUM", "HIGH", "CRITICAL")
 CLAIMED_VIOLATIONS = ("POLICY_BYPASS", "UNSUPPORTED_FRAUD_DETERMINATION",
                       "PROHIBITED_FACTOR_USE", "THRESHOLD_CONTRADICTION",
-                      "EXPLANATION_EVIDENCE_MISMATCH", "ADVERSARIAL_INPUT", "OTHER")
+                      "EXPLANATION_EVIDENCE_MISMATCH", "ADVERSARIAL_INPUT",
+                      "CONFLICTING_EVIDENCE", "OTHER")
 
 CH_OPEN = "OPEN"
 CH_CLOSED = "CLOSED"
@@ -147,6 +151,7 @@ REASON_CODES = (
     "CRITERIA_CONFLICT",
     "CRITERIA_UNCLEAR",
     "BYTES_NOT_BOUND",
+    "EVIDENCE_TRUNCATED",
     "WITHDRAWN",                        # cancelled
     "LAPSED",
 )
@@ -255,32 +260,41 @@ QUOTE_KEYS = ("evidence_id", "text")
 # approve"), and it must stay adjudicable. Only text aimed at this panel stops a
 # round.
 EVALUATOR_MARKERS = (
-    "note to the adjudicator", "note to adjudicators", "note to the assessor",
-    "note to assessors", "note to the validator", "note to validators",
-    "note to the reviewer of this case", "attention adjudicator", "attention assessor",
-    "attention validator", "attention validators", "instructions for the adjudicator",
-    "instructions for validators", "decisionshield panel", "decisionshield validators",
-    "set the verdict to", "return policy_compliant", "return policy_violation",
-    "mark this case as compliant", "mark this case as a violation",
-    "to any ai adjudicating", "ai adjudicator:", "the correct outcome is",
-    "the correct outcome here is",
-    "the correct verdict is", "policy_compliant", "policy_violation_confirmed")
-# letters from other scripts that a reader cannot tell from Latin ones, folded to
-# Latin for the marker scan only (Cyrillic and Greek lookalikes)
+    "note to the adjudicator", "note to adjudicators", "note to the adjudicators",
+    "attention adjudicator", "attention adjudicators",
+    "instructions for the adjudicator", "instructions for adjudicators",
+    "instructions to the adjudicator", "decisionshield panel", "decisionshield validators",
+    "decisionshield adjudicator", "to any ai adjudicating")
+# the same, where the phrase names one of this contract's own verdict words; these
+# are matched with the underscore kept, so "return policy violation" in a retail
+# policy is not one
+VERDICT_MARKERS = (
+    "return policy_compliant", "return policy_violation_confirmed",
+    "verdict is policy_compliant", "verdict is policy_violation_confirmed",
+    "verdict to policy_compliant", "verdict to policy_violation_confirmed",
+    "outcome is policy_compliant", "outcome is policy_violation_confirmed",
+    "outcome here is policy_compliant", "outcome here is policy_violation_confirmed")
+# letters from other scripts and letterlike forms that a reader cannot tell from
+# Latin ones, folded to Latin for the marker scan only
 CONFUSABLES = {
     "\u0430": "a", "\u0435": "e", "\u043e": "o", "\u0440": "p", "\u0441": "c",
     "\u0443": "y", "\u0445": "x", "\u0456": "i", "\u0458": "j", "\u0455": "s",
-    "\u0501": "d", "\u04cf": "l", "\u0410": "a", "\u0412": "b", "\u0415": "e",
-    "\u041a": "k", "\u041c": "m", "\u041d": "h", "\u041e": "o", "\u0420": "p",
-    "\u0421": "c", "\u0422": "t", "\u0425": "x", "\u0406": "i", "\u0408": "j",
-    "\u0405": "s", "\u03bf": "o", "\u03b1": "a", "\u03b5": "e", "\u03b9": "i",
-    "\u03ba": "k", "\u03bd": "v", "\u03c1": "p", "\u03c4": "t", "\u03c5": "u",
-    "\u0391": "a", "\u0392": "b", "\u0395": "e", "\u0397": "h", "\u0399": "i",
-    "\u039a": "k", "\u039c": "m", "\u039d": "n", "\u039f": "o", "\u03a1": "p",
-    "\u03a4": "t", "\u03a5": "y", "\u03a7": "x"}
-# named entities that hide or split a word, decoded for the marker scan
-SCAN_ENTITIES = (("&shy;", ""), ("&zwj;", ""), ("&zwnj;", ""), ("&zerowidthspace;", ""),
-                 ("&nobreak;", ""), ("&lrm;", ""), ("&rlm;", ""), ("&nbsp;", " "))
+    "\u0501": "d", "\u04cf": "l", "\u04bb": "h", "\u0410": "a", "\u0412": "b",
+    "\u0415": "e", "\u041a": "k", "\u041c": "m", "\u041d": "h", "\u041e": "o",
+    "\u0420": "p", "\u0421": "c", "\u0422": "t", "\u0425": "x", "\u0406": "i",
+    "\u0408": "j", "\u0405": "s", "\u03bf": "o", "\u03b1": "a", "\u03b5": "e",
+    "\u03b9": "i", "\u03ba": "k", "\u03bd": "v", "\u03c1": "p", "\u03c4": "t",
+    "\u03c5": "u", "\u0391": "a", "\u0392": "b", "\u0395": "e", "\u0397": "h",
+    "\u0399": "i", "\u039a": "k", "\u039c": "m", "\u039d": "n", "\u039f": "o",
+    "\u03a1": "p", "\u03a4": "t", "\u03a5": "y", "\u03a7": "x", "\u0131": "i",
+    "\u0585": "o", "\u0578": "n", "\u057d": "u", "\u1d00": "a", "\u0299": "b",
+    "\u1d04": "c", "\u1d05": "d", "\u1d07": "e", "\ua730": "f", "\u0262": "g",
+    "\u029c": "h", "\u026a": "i", "\u1d0a": "j", "\u1d0b": "k", "\u029f": "l",
+    "\u1d0d": "m", "\u0274": "n", "\u1d0f": "o", "\u1d18": "p", "\u0280": "r",
+    "\ua731": "s", "\u1d1b": "t", "\u1d1c": "u", "\u1d20": "v", "\u1d21": "w",
+    "\u028f": "y", "\u1d22": "z"}
+# letters that render as nothing, which letters-only matching would otherwise keep
+BLANK_LETTERS = (0x3164, 0x115F, 0x1160, 0xFFA0, 0x17B4, 0x17B5)
 # characters that hide or reorder text for a human reader while a parser sees it;
 # the zero-width joiner is left out because emoji sequences use it
 HIDDEN_CHARACTERS = ("\u200b", "\u200c", "\u200e", "\u200f", "\u202a", "\u202b", "\u202c",
@@ -481,11 +495,89 @@ def _is_record_id(text, prefix: str) -> bool:
 
 # == security: untrusted text ======================================================
 
+SUBJECT_NAMES = ("(decision_recorded|violation_condition|decision_rule|prohibited_factor"
+                 "|evidence_consistency)(?: (?:is|to))?[ :={\\[(]{0,6}")
+OWN_STATES = "(?:not_met|not_used)"
+PLAIN_STATES = ("(?:matches|differs|met|followed|broken|used|supported|contradicted"
+                "|contradictory|consistent|unclear)")
+# a subject name given an answer word: in the panel's JSON form (with "state"), or
+# with one of the two answer words nothing else uses. An audit record that says
+# `"decision_rule": "followed"` is a record, and the panel reads it as one
+ANSWER_SHAPE = (SUBJECT_NAMES + "(?:"
+                + "state[ :=]{0,4}(?:" + OWN_STATES + "|" + PLAIN_STATES + ")(?![a-z_])"
+                + "|" + OWN_STATES + "(?![a-z_])"
+                + ")")
+
+
+def _marker_words(form: str, keep_underscore: bool) -> str:
+    """The words of a scan-formed text, joined by single spaces with one at each
+    end, so a phrase is found only on word boundaries. A hyphen at a line end
+    joins the two halves of its word. With `keep_underscore`, an identifier such
+    as policy_compliant stays one word; without it, underscores separate."""
+    text = re.sub("-[ \\t]*[\\r\\n]+[ \\t]*", "", form.casefold())
+    out = [" "]
+    inside = False
+    for ch in text:
+        if ch.isalnum() or (keep_underscore and ch == "_"):
+            out.append(ch)
+            inside = True
+        elif inside:
+            out.append(" ")
+            inside = False
+    if inside:
+        out.append(" ")
+    return "".join(out)
+
+
+def _marker_hits_in(form: str) -> list:
+    plain = _marker_words(form, False)
+    tokens = _marker_words(form, True)
+    return [m for m in EVALUATOR_MARKERS if " " + m + " " in plain] \
+        + [m for m in VERDICT_MARKERS if " " + m + " " in tokens]
+
+
+def _marker_hits(text: str) -> list:
+    """The marker phrases a text carries, read in the scan form."""
+    return _marker_hits_in(_scan_form(text))
+
+
+def _answer_shape_in(form: str) -> bool:
+    """Text written in the panel's own answer format: one of its subject names
+    given one of its answer words - `VIOLATION_CONDITION: NOT_MET`, or the JSON
+    shape the panel returns. No financial record says that; a document that does
+    is addressing the adjudicator. A field merely named like a subject, whose
+    value only begins with an ordinary word (`decision_rule: used the 40 percent
+    ceiling`), is not a hit."""
+    compact = "".join(ch for ch in _norm_ws(form) if ch not in "\"'`\\")
+    return re.search(ANSWER_SHAPE, compact) is not None
+
+
 def _evaluator_hits(text: str) -> bool:
-    folded = _norm_ws(text)
-    return any(marker in folded for marker in EVALUATOR_MARKERS)
+    """Whether a text addresses the adjudicator. The caller passes the text as
+    written; the scan form is taken here, once."""
+    form = _scan_form(text)
+    return len(_marker_hits_in(form)) > 0 or _answer_shape_in(form)
 
 
+def _unescape_entities(text: str) -> str:
+    """HTML entities decoded, fail-soft. A character reference with more digits
+    than any code point has is not a character: it is blanked first, because the
+    decoder would otherwise try to read it as a number of any length and raise -
+    and an exception here would end the round on every node."""
+    text = re.sub("&#[0-9]{8,};?|&#[xX][0-9a-fA-F]{7,};?", " ", text)
+    try:
+        return _html_unescape(text)
+    except Exception:
+        return text
+
+
+def _has_surrogate(text: str) -> bool:
+    """A lone surrogate cannot be encoded: one stored in a record would make
+    every view that returns it unreadable."""
+    for ch in text:
+        if 0xD800 <= ord(ch) <= 0xDFFF:
+            return True
+    return False
 def _hidden_hits(text: str) -> bool:
     """Characters that hide or reorder text from a human reader. A byte-order
     mark at the very start is ordinary."""
@@ -508,24 +600,29 @@ def _text_error(value, cap: int, label: str, allow_newlines: bool, required: boo
             continue
         if code < 32 or code == 127:
             return label + " contains control characters"
-    if _evaluator_hits(_scan_form(value)) or _hidden_hits(value):
+        if 0xD800 <= code <= 0xDFFF:
+            return label + " contains characters that cannot be encoded"
+    if _evaluator_hits(value) or _hidden_hits(value):
         return label + " must not contain instructions to the evaluator or hidden text"
     return ""
 
 
 def _clean_note(value) -> str:
-    """A model's note, reduced to one line within the cap. Idempotent, so the
-    structural gate can refuse any note cleaning would change again."""
+    """A model's note, reduced to one line within the cap. A note that carries a
+    personal identifier, text addressed to the panel or an unencodable character
+    is dropped, not stored. Idempotent, so the structural gate can refuse any
+    note cleaning would change again."""
     if not isinstance(value, str):
         return ""
     chars = []
     for ch in value:
         chars.append(" " if (ord(ch) < 32 or ord(ch) == 127) else ch)
     note = " ".join("".join(chars).split())[:NOTE_CAP].strip()
-    if note != "" and (_evaluator_hits(_scan_form(note)) or _hidden_hits(note)
+    if note != "" and (_has_surrogate(note) or _evaluator_hits(note) or _hidden_hits(note)
                        or _privacy_error(note, "note") != ""):
         return ""
     return note
+
 
 # == security: URL admission =======================================================
 
@@ -662,21 +759,37 @@ def _json_list(text, cap: int):
     return obj if isinstance(obj, list) else None
 
 
-def _privacy_error(value: str, label: str) -> str:
-    """A heuristic guard, not a privacy guarantee: refuse free text that carries
-    an email address or a run of nine or more digits - the shape of an account,
-    card or identity number. The rule it enforces is that cases use synthetic
-    references; the guard catches the obvious ways of breaking it."""
+IDENTIFIER_SHAPES = ("(?<![0-9])(?:[0-9]{3}[-.][0-9]{3}[-.][0-9]{4}"
+                     "|[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}"
+                     "|[0-9]{3}-[0-9]{2}-[0-9]{4})(?![0-9-])")
+SPACED_CARD = "(?<![0-9])[0-9]{4} [0-9]{4} [0-9]{4} [0-9]{4}(?![0-9])"
+QUOTE_DIGIT_RUN = 15              # a quote may carry a timestamp or an amount
+
+
+def _privacy_error(value: str, label: str, written: bool = True) -> str:
+    """A heuristic guard, not a privacy guarantee. Text a party WRITES into the
+    contract is refused if it carries an email address, nine or more digits in a
+    row, or digits grouped like a phone, card or social-security number: the rule
+    is that cases use synthetic references. A QUOTE is a passage of public,
+    pinned evidence, and ordinary records carry timestamps and amounts, so there
+    only an email address, a card-length run, or a dashed identifier is refused.
+    A dated reference (APP-2026-000123) or a date range is none of those shapes."""
     if re.search("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+[.][A-Za-z]{2,}", value):
         return label + " must not contain an email address: use a synthetic reference"
-    # a dash continues a run (555-123-4567); a space does not, so a date and a
-    # time ("2026-09-28 14:00") are not one number
+    limit = DIGIT_RUN_LIMIT if written else QUOTE_DIGIT_RUN
     run = 0
     for ch in value:
-        run = run + 1 if ch.isdigit() else (run if ch == "-" and run > 0 else 0)
-        if run >= DIGIT_RUN_LIMIT:
+        run = run + 1 if ch.isdigit() else 0
+        if run >= limit:
             return label + " must not contain a long digit sequence (an account or ID" \
                 " number): use a synthetic reference"
+    spaced = re.search(SPACED_CARD, value) if written else None
+    if spaced is not None and all(1900 <= int(group) <= 2100
+                                  for group in spaced.group(0).split(" ")):
+        spaced = None                  # four years in a row are not a card number
+    if re.search(IDENTIFIER_SHAPES, value) or spaced is not None:
+        return label + " must not contain a long digit sequence (an account or ID" \
+            " number): use a synthetic reference"
     return ""
 
 
@@ -784,13 +897,9 @@ def _evidence_error(values, spec: dict) -> str:
         err = _free_text_error(entry["label"], LABEL_CAP, where + " label", False)
         if err != "":
             return err
-        if entry["kind"] == KIND_PINNED:
-            if not _is_hex(entry["sha256"], 64):
-                return where + " sha256 must be 64 lowercase hexadecimal characters for a" \
-                    " PINNED item"
-        elif entry["sha256"] != "":
-            return where + " sha256 must be empty for a LIVE item, whose bytes are" \
-                " not bound"
+        if not _is_hex(entry["sha256"], 64):
+            return where + " sha256 must be 64 lowercase hexadecimal characters: every" \
+                " item is bound to its bytes"
         err, canonical_url = _url_parts(entry["url"])
         if err != "":
             return where + " " + err
@@ -826,14 +935,21 @@ def _numbered(spec: dict, values: list) -> list:
 
 # == grounding a quote in the text a node retrieved ====================================
 
-SIGNIFICANT = "<>=+%$"
+SIGNIFICANT = "<>=+%$\u20ac\u00a3\u00a5\u00b1\u00d7\u00f7"
+COMPOSED = {"\u2264": ("<", "="), "\u2265": (">", "="), "\u2260": ("!", "=")}
+DASHES = "-\u2212\u2010\u2011\u2012\u2013"
+CURRENCY = "$\u20ac\u00a3\u00a5"
 
 
 def _word_tokens(text: str) -> list:
     """Lowercase alphanumeric words, in order. A decimal point between digits
-    stays inside its number; a comparison or percent sign, and a minus sign
-    standing before a digit, are tokens of their own - a quote may not add,
-    drop or invert them. Everything else separates."""
+    stays inside its number. A comparison, percent or currency sign and a "!"
+    before "=" are tokens of their own, and so is a minus sign: a dash that
+    stands before a digit or a currency sign and does not follow a letter or a
+    digit. A quote may not add, drop or change any of them. The composed signs
+    read as the ASCII pairs they stand for, and every kind of dash as the same
+    dash. A hyphen inside a reference or a range (APP-0007, 60-69) and every
+    other character separate."""
     folded = text.casefold()
     n = len(folded)
     words = []
@@ -845,24 +961,37 @@ def _word_tokens(text: str) -> list:
         if ch.isalnum():
             current.append(ch)
             continue
-        if ch == "." and current and prev.isdigit() and nxt.isdigit():
-            current.append(ch)
+        if ch in ".," and current and prev.isdigit() and nxt.isdigit():
+            current.append(ch)          # 31.5, 31,5 and 1,000 are each one number
+            continue
+        if ch == "." and not current and nxt.isdigit() and not prev.isalnum():
+            current.append(ch)          # .5 is a number, and not the number 5
             continue
         if current:
             words.append("".join(current))
             current = []
-        if ch in SIGNIFICANT or (ch == "-" and nxt.isdigit() and not prev.isalnum()):
+        if ch in COMPOSED:
+            words.extend(COMPOSED[ch])
+        elif ch in SIGNIFICANT or (ch == "!" and nxt == "="):
             words.append(ch)
+        elif ch in DASHES and not prev.isalnum() and nxt != "" \
+                and (nxt.isdigit() or nxt in CURRENCY or nxt == "."):
+            words.append("-")
     if current:
         words.append("".join(current))
     return words
 
 
 def _find_run(haystack: list, needle: list, start: int) -> int:
+    """Where a run of words ends in a document, or -1. A run that begins with a
+    number does not match where the document puts a minus sign before that
+    number: the quote would drop the sign."""
     last = len(haystack) - len(needle)
+    numeric = len(needle) > 0 and (needle[0][0].isdigit() or needle[0][0] == ".")
     i = start
     while i <= last:
-        if haystack[i:i + len(needle)] == needle:
+        if haystack[i:i + len(needle)] == needle \
+                and not (numeric and i > 0 and haystack[i - 1] == "-"):
             return i + len(needle)
         i = i + 1
     return -1
@@ -879,7 +1008,7 @@ def _grounds_in_order(haystack: list, text: str) -> bool:
         words = _word_tokens(part)
         if len(words) == 0:
             continue
-        if len([w for w in words if w not in SIGNIFICANT and w != "-"]) < 2:
+        if len([w for w in words if w[0].isalnum()]) < 2:
             return False
         end = _find_run(haystack, words, position)
         if end < 0:
@@ -992,8 +1121,9 @@ def _error_text(err) -> str:
 
 def _vote_on_leader_error(leader_res, reproduce) -> bool:
     """A leader that failed is ratified only by the same deterministic
-    failure, or by a transient one meeting a transient one. A model failure
-    is never ratified: the round rotates instead."""
+    failure, or by a transient one meeting a transient one - which is how a
+    failed model call is raised. An error marked as a model error is never
+    ratified."""
     if not isinstance(leader_res, gl.vm.UserError):
         return False
     leader_text = _error_text(leader_res)
@@ -1011,11 +1141,6 @@ def _vote_on_leader_error(leader_res, reproduce) -> bool:
     return False
 
 # == retrieval: status, normalisation, digest ======================================
-
-TEXT_TYPES = ("text/", "json", "xml", "markdown", "javascript")
-ENTITIES = (("&nbsp;", " "), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", '"'), ("&#39;", "'"),
-            ("&apos;", "'"), ("&amp;", "&"))
-
 
 def _status_for_http(code: int) -> str:
     if 300 <= code < 400:
@@ -1039,40 +1164,121 @@ def _header(headers, name: str) -> str:
     return ""
 
 
-def _looks_html(text: str, content_type: str) -> bool:
-    if "html" in content_type:
-        return True
-    head = text[:2000].lower()
-    return "<html" in head or "<!doctype html" in head or "<body" in head
+TYPE_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789/+.-;=_"
 
 
-RAW_TAGS = ("script", "style", "noscript", "template")
+def _type_token(value: str) -> str:
+    """A content-type header reduced to the characters a media type is made of.
+    It is recorded, never read by the panel and never decides how bytes are
+    parsed; reduced this way it cannot carry prose or an unencodable character
+    into a record."""
+    return "".join(ch for ch in value.lower() if ch in TYPE_CHARS)[:CONTENT_TYPE_CAP]
+
+
+def _looks_html(text: str) -> bool:
+    """HTML by how the bytes begin, and by nothing else: after any byte-order
+    mark, whitespace, XML prolog and leading comments, the document opens with a
+    doctype, <html>, <head> or <body>. The content-type header is the host's to
+    set and is not part of what was pinned: if it decided how the bytes are read,
+    the host could change what the panel sees without changing a byte."""
+    head = _ascii_lower(text[:2048].lstrip(chr(0xFEFF)))
+    ws = "[ " + chr(9) + chr(13) + chr(10) + "]"
+    opening = ("^(?:" + ws + "|<[?][^>]*>|<!--(?:[^-]|-[^-])*-->)*"
+               "<(?:!doctype html|html|head|body)(?:" + ws + "|[>/]|$)")
+    return re.match(opening, head) is not None
+
+
+# elements whose content a page does not show as running text
+RAW_TAGS = ("script", "style", "noscript", "template", "title", "iframe", "canvas",
+            "select", "video", "audio", "object", "textarea")
+
+
+def _ascii_lower(text: str) -> str:
+    """Lowercase ASCII letters only, so every index still lines up with the text."""
+    return "".join(chr(ord(ch) + 32) if "A" <= ch <= "Z" else ch for ch in text)
+
+
+def _tag_end(text: str, start: int) -> int:
+    """The index just past the '>' that closes the tag opened at `start`. A
+    quoted attribute value - a quote straight after '=' - is skipped whole; a
+    quote anywhere else is just a character. -1 when the tag never closes."""
+    n = len(text)
+    i = start + 1
+    quote = ""
+    after_equals = False
+    while i < n:
+        ch = text[i]
+        if quote != "":
+            if ch == quote:
+                quote = ""
+        elif (ch == '"' or ch == "'") and after_equals:
+            quote = ch
+        elif ch == ">":
+            return i + 1
+        if ch == "=":
+            after_equals = True
+        elif not ch.isspace():
+            after_equals = False
+        i = i + 1
+    return -1
+
+
+def _comment_end(text: str, start: int) -> int:
+    """The index just past a comment opened at `start`, as a browser ends it:
+    `<!-->` and `<!--->` are empty comments, and `--!>` closes one too. -1 when it
+    never closes. One forward search, so a page of many comments stays linear."""
+    if text.startswith("<!-->", start):
+        return start + 5
+    if text.startswith("<!--->", start):
+        return start + 6
+    pos = text.find("--", start + 4)
+    while pos >= 0:
+        if text.startswith(">", pos + 2):
+            return pos + 3
+        if text.startswith("!>", pos + 2):
+            return pos + 4
+        pos = text.find("--", pos + 1)
+    return -1
 
 
 def _strip_markup(text: str, joiner: str = " ") -> str:
-    """Remove comments, raw-text elements and tags in one forward pass - linear
-    in the length of the page whatever its markup, so hostile HTML cannot make
-    every node spend quadratic time. A '<' that no '>' ever follows is text."""
-    lower = text.lower()
+    """The text content of an HTML document, by a fixed and simple rule - not a
+    browser. A '<' opens a tag only before a letter, '/', '!' or '?', so "ratio <
+    40 percent" keeps its words; a '>' inside a quoted attribute value does not
+    end the tag; a declaration or processing instruction ends at its first '>';
+    elements whose content a page does not show as text are dropped whole; a tag
+    or comment that never closes hides the rest; entities are decoded. Text a
+    stylesheet or a `hidden` attribute would hide IS read: it is in the pinned
+    bytes, where both parties can see it. Linear in the length of the page."""
+    lower = _ascii_lower(text)
     n = len(text)
     out = []
     i = 0
-    closed = True                  # some '>' still follows the current position
     while i < n:
         j = text.find("<", i)
-        if j < 0 or not closed:
+        if j < 0:
             out.append(text[i:])
             break
         out.append(text[i:j])
+        nxt = lower[j + 1] if j + 1 < n else ""
+        if not (("a" <= nxt <= "z") or nxt == "/" or nxt == "!" or nxt == "?"):
+            out.append("<")
+            i = j + 1
+            continue
         if text.startswith("<!--", j):
-            k = text.find("-->", j + 4)
-            i = n if k < 0 else k + 3
+            k = _comment_end(text, j)
+            i = n if k < 0 else k
+            out.append(joiner)
+            continue
+        if nxt == "!" or nxt == "?":
+            k = text.find(">", j)
+            i = n if k < 0 else k + 1
             out.append(joiner)
             continue
         raw = ""
         for tag in RAW_TAGS:
             after = j + 1 + len(tag)
-            if lower.startswith("<" + tag, j) and (after >= n or not lower[after].isalnum()):
+            if lower.startswith("<" + tag, j) and (after >= n or lower[after] in " \t\r\n>/"):
                 raw = tag
                 break
         if raw != "":
@@ -1081,72 +1287,64 @@ def _strip_markup(text: str, joiner: str = " ") -> str:
             i = n if k < 0 else k + 1
             out.append(joiner)
             continue
-        k = text.find(">", j + 1)
-        if k < 0:
-            closed = False
-            out.append(text[j:])
-            break
+        k = _tag_end(text, j)
+        i = n if k < 0 else k
         out.append(joiner)
-        i = k + 1
-    text = "".join(out)
-    for entity, char in ENTITIES:
-        text = text.replace(entity, char)
-    return text
-
-
-def _decode_numeric(text: str) -> str:
-    """&#NNN; and &#xHH; entities, decoded for the marker scan."""
-    def one(found):
-        try:
-            value = int(found.group(2), 16) if found.group(1) else int(found.group(2))
-            return chr(value) if 0 < value < 0x110000 else " "
-        except Exception:
-            return " "
-    return re.sub("&#([xX]?)([0-9a-fA-F]{1,7});", one, text)
-
-
-def _ascii_lower(text: str) -> str:
-    """Lowercase ASCII letters only, so every index still lines up with the text."""
-    return "".join(chr(ord(ch) + 32) if "A" <= ch <= "Z" else ch for ch in text)
+    return _unescape_entities("".join(out))
 
 
 def _decode_json_escapes(text: str) -> str:
-    """\\uXXXX escapes, decoded for the marker scan: a JSON item reaches the panel
-    as written, escapes and all."""
-    def one(found):
-        return chr(int(found.group(1), 16))
-    return re.sub("\\\\u([0-9a-fA-F]{4})", one, text)
+    """JSON string escapes, decoded for the marker scan: a JSON item reaches the
+    panel as written, and the panel reads `\\n` as the line break it stands for."""
+    def code(found):
+        value = int(found.group(1), 16)
+        return " " if 0xD800 <= value <= 0xDFFF else chr(value)
+    text = re.sub("\\\\u([0-9a-fA-F]{4})", code, text)
+    return re.sub("\\\\[ntrbf/]", " ", text)
 
 
 def _scan_form(text: str) -> str:
-    """The form the marker scan reads: numeric and word-splitting named entities
-    and JSON escapes decoded; every character that can split a word invisibly
-    removed - hidden characters, the soft hyphen and the zero-width joiner;
-    fullwidth forms and Cyrillic or Greek lookalikes folded to Latin."""
-    text = _decode_json_escapes(_decode_numeric(text))
-    lowered = _ascii_lower(text)
-    for entity, char in SCAN_ENTITIES:
-        if entity in lowered:
-            out = []
-            i = 0
-            while i < len(text):
-                if lowered.startswith(entity, i):
-                    out.append(char)
-                    i = i + len(entity)
-                else:
-                    out.append(text[i])
-                    i = i + 1
-            text = "".join(out)
-            lowered = _ascii_lower(text)
+    """The form the marker scan reads. Entities and JSON escapes are decoded, up
+    to three layers deep; characters that hide or split a word are removed -
+    hidden and tag characters, combining marks, blank letters; fullwidth,
+    mathematical and circled letters and Cyrillic, Greek, Armenian and small-cap
+    lookalikes are folded to Latin; invisible tag characters that spell ASCII
+    are read as the ASCII they spell."""
+    for _layer in range(3):
+        before = text
+        text = _decode_json_escapes(_unescape_entities(text))
+        if text == before:
+            break
     chars = []
     for ch in text:
-        if ch in HIDDEN_CHARACTERS or ch in (chr(0xFEFF), chr(0xAD), chr(0x200D)):
-            continue
         code = ord(ch)
-        if 0xFF01 <= code <= 0xFF5E:
+        if code < 0x80:
+            chars.append(ch)
+            continue
+        if ch in HIDDEN_CHARACTERS or code in (0xFEFF, 0xAD, 0x200D, 0x034F, 0x061C, 0x180E):
+            continue
+        if 0x0300 <= code <= 0x036F or 0xFE00 <= code <= 0xFE0F:
+            continue
+        if code in BLANK_LETTERS:
+            chars.append(" ")          # a letter that renders as a gap is read as one
+            continue
+        if 0xE0020 <= code <= 0xE007E:
+            ch = chr(code - 0xE0000)
+        elif 0xE0000 <= code <= 0xE007F:
+            continue
+        elif 0xFF01 <= code <= 0xFF5E:
             ch = chr(code - 0xFEE0)
         elif code == 0x3000:
             ch = " "
+        elif 0x1D400 <= code <= 0x1D6A3:
+            index = (code - 0x1D400) % 52
+            ch = chr(65 + index) if index < 26 else chr(97 + index - 26)
+        elif 0x1D7CE <= code <= 0x1D7FF:
+            ch = chr(48 + (code - 0x1D7CE) % 10)
+        elif 0x24B6 <= code <= 0x24CF:
+            ch = chr(65 + code - 0x24B6)
+        elif 0x24D0 <= code <= 0x24E9:
+            ch = chr(97 + code - 0x24D0)
         chars.append(CONFUSABLES.get(ch, ch))
     return "".join(chars)
 
@@ -1158,14 +1356,19 @@ def _normalize(text: str, html: bool) -> str:
     two nodes disagree."""
     if html:
         text = _strip_markup(text)
-    text = "".join(ch for ch in text if ch not in HIDDEN_CHARACTERS and ch != chr(0xFEFF))
+    elif text.lstrip(chr(0xFEFF) + " " + chr(9) + chr(13) + chr(10))[:1] in ("{", "["):
+        # a JSON record: its string escapes stand for characters, and the panel
+        # reads - and a quote is checked against - the characters they stand for
+        text = _decode_json_escapes(text)
+    text = "".join(ch for ch in text if ch not in HIDDEN_CHARACTERS
+                   and ch != chr(0xFEFF) and ch != chr(0xAD))
     return " ".join(text.split())
 
 
 def _title_of(text: str, html: bool) -> str:
     if not html:
         return ""
-    lower = text.lower()
+    lower = _ascii_lower(text)
     start = lower.find("<title")
     if start < 0:
         return ""
@@ -1208,19 +1411,17 @@ def _fetch_source(url: str) -> tuple:
         headers = getattr(response, "headers", None) or {}
     except Exception:
         return (_empty_source(TIMEOUT, 0, "", 0), None, None)
-    content_type = _header(headers, "content-type").lower()[:CONTENT_TYPE_CAP]
+    content_type = _type_token(_header(headers, "content-type"))
     if code < 200 or code >= 300:
         return (_empty_source(_status_for_http(code), code, content_type, 0), None, None)
     if body is None or len(body) == 0:
         return (_empty_source(INVALID_CONTENT, code, content_type, 0), None, None)
     body = bytes(body)
-    if content_type != "" and not any(t in content_type for t in TEXT_TYPES):
-        return (_empty_source(UNSUPPORTED_CONTENT, code, content_type, len(body)), None, None)
     raw = body[:BODY_BYTES_CAP]
     text = _decode(raw, len(body) > BODY_BYTES_CAP)
     if text is None:
         return (_empty_source(INVALID_CONTENT, code, content_type, len(body)), None, None)
-    html = _looks_html(text, content_type)
+    html = _looks_html(text)
     normalized = _normalize(text, html)
     if normalized == "":
         return (_empty_source(INVALID_CONTENT, code, content_type, len(body)), None, None)
@@ -1239,16 +1440,14 @@ def _markers(source: dict, panel_text, raw_text) -> list:
     if source["status"] not in READABLE:
         return []
     found = []
-    joined = " ".join(_scan_form(_strip_markup(raw_text, "")).split())
-    body_hit = _evaluator_hits(_scan_form(panel_text)) or _evaluator_hits(joined)
+    body_hit = _evaluator_hits(panel_text) or _evaluator_hits(_strip_markup(raw_text, ""))
     if body_hit:
         found.append(MARK_BODY)
-    if not body_hit and _evaluator_hits(_scan_form(raw_text)):
+    if not body_hit and _evaluator_hits(raw_text):
         found.append(MARK_META)
-    if _evaluator_hits(_scan_form(source["title"])):
+    if _evaluator_hits(source["title"]):
         found.append(MARK_TITLE)
     return found
-
 
 
 # == the panel's subjects and what a finding must show ================================
@@ -1351,7 +1550,8 @@ def _normalize_finding(ctx: dict, subject_id: str, entry, eligible: list,
             rq = {"text": rq}
         if not isinstance(rq, dict) or not isinstance(rq.get("text"), str):
             continue
-        if _spliced(rq["text"]):
+        if _spliced(rq["text"]) or _has_surrogate(rq["text"]) \
+                or _privacy_error(rq["text"], "quote", False) != "":
             continue
         grounded = _ground_quote(rq["text"], _evidence_ref(rq.get("evidence_id")),
                                  quotable, texts)
@@ -1399,7 +1599,10 @@ def _retrieve(ctx: dict) -> tuple:
 
 def _code_reason(ctx: dict, sources: list, markers: list) -> str:
     """A round decided without the panel. Integrity and legibility first: a
-    failed fetch is never a violation and never compliance."""
+    failed fetch is never a violation and never compliance. Every pinned item is
+    part of the case the tester committed to, so one that cannot be read makes
+    the round unavailable: a host must not be able to choose which of its own
+    records the panel sees."""
     if any(s["status"] == DIGEST_MISMATCH for s in sources):
         return "EVIDENCE_DIGEST_MISMATCH"
     readable = [s["evidence_id"] for s in sources if s["status"] in READABLE]
@@ -1407,6 +1610,11 @@ def _code_reason(ctx: dict, sources: list, markers: list) -> str:
         return "POLICY_UNREADABLE"
     for role in ctx["challenge"]["required_evidence"]:
         if not any(_role_of(ctx, e) == role for e in readable):
+            return "REQUIRED_EVIDENCE_UNREADABLE"
+    for s in sources:
+        item = _item_of(ctx, s["evidence_id"])
+        if item is not None and item.get("kind") == KIND_PINNED \
+                and s["evidence_id"] not in readable:
             return "REQUIRED_EVIDENCE_UNREADABLE"
     if len(markers) > 0:
         return "SOURCE_ADDRESSES_ADJUDICATOR"
@@ -1488,7 +1696,8 @@ def _valid_source(s, evidence_id: str) -> bool:
     if s["evidence_id"] != evidence_id or s["status"] not in SOURCE_STATUSES \
             or not _int_in(s["http_status"], 0, 999):
         return False
-    if not isinstance(s["content_type"], str) or len(s["content_type"]) > CONTENT_TYPE_CAP:
+    if not isinstance(s["content_type"], str) \
+            or s["content_type"] != _type_token(s["content_type"]):
         return False
     if not _is_int(s["byte_count"]) or s["byte_count"] < 0:
         return False
@@ -1531,7 +1740,7 @@ def _valid_finding(ctx: dict, f, subject_id: str, eligible: list, texts,
             or f["state"] not in _vocab(ctx, subject_id):
         return False
     if not isinstance(f["note"], str) or len(f["note"]) > NOTE_CAP \
-            or _clean_note(f["note"]) != f["note"]:
+            or _has_surrogate(f["note"]) or _clean_note(f["note"]) != f["note"]:
         return False
     if not isinstance(f["quotes"], list) or len(f["quotes"]) > MAX_QUOTES:
         return False
@@ -1551,6 +1760,8 @@ def _valid_finding(ctx: dict, f, subject_id: str, eligible: list, texts,
                 or q["text"] != q["text"].strip():
             return False
         if q in seen or _spliced(q["text"]) or not _quote_grounded(q, quotable, texts):
+            return False
+        if _has_surrogate(q["text"]) or _privacy_error(q["text"], "quote", False) != "":
             return False
         seen.append(q)
     return _enough_quotes(subject_id, f["state"], f["quotes"])
@@ -1653,20 +1864,21 @@ def _criteria(ctx: dict, payload: dict) -> dict:
 
 
 def _bound(ctx: dict, payload: dict) -> bool:
-    """Whether the case rests on bound bytes: every readable item that can be
-    evidence - the policy, the inputs, the output, any corroboration - was
-    pinned to a sha256. Only the explanation, which is never evidence, may be
-    LIVE. Deciding this from the case rather than from the passages a reading
-    quotes means a positive verdict cannot rest on unbound facts the reading
-    did not cite, and two honest nodes quoting different passages cannot
-    disagree about it."""
-    for s in payload["sources"]:
-        item = _item_of(ctx, s["evidence_id"])
-        if item is None or s["status"] not in READABLE or item["role"] == ROLE_EXPLANATION:
-            continue
+    """Whether the case rests on bound bytes: every item it declares is pinned
+    to a sha256. Decided from the declaration alone - not from what was fetched,
+    not from which passages a reading quoted, and whatever role an item was
+    given: an unpinned item the panel can read is unbound evidence under any
+    label."""
+    for item in ctx["evidence"]:
         if item["kind"] != KIND_PINNED:
             return False
     return True
+
+
+def _truncated(payload: dict) -> bool:
+    """Whether the panel read less than the whole of some item: a decisive
+    passage may lie past the cap, so neither positive verdict rests on one."""
+    return any(s["status"] == PARTIAL_SOURCE for s in payload["sources"])
 
 
 def _verdict_for(ctx: dict, payload: dict) -> tuple:
@@ -1696,6 +1908,8 @@ def _verdict_for(ctx: dict, payload: dict) -> tuple:
     if violation == MET:
         if not _bound(ctx, payload):
             return (INCONCLUSIVE, "BYTES_NOT_BOUND")
+        if _truncated(payload):
+            return (INCONCLUSIVE, "EVIDENCE_TRUNCATED")
         return (VIOLATION_CONFIRMED, "VIOLATION_CONDITION_MET")
     if violation == UNCLEAR:
         return (INCONCLUSIVE, "VIOLATION_UNCLEAR")
@@ -1709,6 +1923,8 @@ def _verdict_for(ctx: dict, payload: dict) -> tuple:
         return (INCONCLUSIVE, "CRITERIA_UNCLEAR")
     if not _bound(ctx, payload):
         return (INCONCLUSIVE, "BYTES_NOT_BOUND")
+    if _truncated(payload):
+        return (INCONCLUSIVE, "EVIDENCE_TRUNCATED")
     return (COMPLIANT, "RULE_FOLLOWED")
 
 
@@ -1757,7 +1973,13 @@ CRITERION_SUBJECTS = (("decision_recorded", SUBJECT_DECISION),
 STOP_ORDER = (SUBJECT_CONSISTENCY, SUBJECT_DECISION, SUBJECT_VIOLATION)
 STOPS = {"EVIDENCE_CONTRADICTORY": 0, "CONSISTENCY_UNCLEAR": 0,
          "DECISION_NOT_RECORDED": 1, "DECISION_UNCLEAR": 1, "BYTES_NOT_BOUND": 1,
+         "EVIDENCE_TRUNCATED": 1,
          "VIOLATION_UNCLEAR": 2, "CRITERIA_CONFLICT": 2, "CRITERIA_UNCLEAR": 2}
+
+
+NULL_CRITERIA = {"decision_recorded": None, "violation_condition_met": None,
+                 "rule_followed": None, "prohibited_factor_detected": None,
+                 "explanation_supported": None}
 
 
 def _fixed_by_comparison(verdict: str, reason: str, subject_id: str) -> bool:
@@ -1788,7 +2010,8 @@ def _derive(ctx: dict, payload: dict) -> dict:
     consequence = {
         "verdict": verdict, "reason_code": reason,
         "criteria": criteria if verdict in POSITIVE_VERDICTS else {},
-        "statuses": {s["evidence_id"]: s["status"] for s in payload["sources"]},
+        "statuses": {s["evidence_id"]: _status_class(s["status"])
+                     for s in payload["sources"]},
         "digests": _digests(ctx, payload),
     }
     severity = ctx["challenge"]["severity"] if verdict == VIOLATION_CONFIRMED else ""
@@ -1800,11 +2023,20 @@ def _derive(ctx: dict, payload: dict) -> dict:
             "findings": payload["findings"]}
 
 
+def _status_class(status: str) -> str:
+    """What a node could do with an item, which is all that nodes must agree on:
+    read it whole, read it in part, find other bytes than were pinned, or not read
+    it. Whether a failed fetch was a 502, a 503 or a timeout differs between
+    honest nodes during one outage and decides nothing."""
+    if status in (RETRIEVED, PARTIAL_SOURCE, DIGEST_MISMATCH):
+        return status
+    return "UNREADABLE"
+
+
 def _evidence_difference(ctx: dict, own: dict, theirs: dict) -> str:
-    """What every node retrieved must be what the leader says it retrieved. The
-    policy and every PINNED item are compared on their bytes; a LIVE item may
-    differ in incidental content, and its quotes are still re-grounded in each
-    node's own text."""
+    """What every node retrieved must be what the leader says it retrieved: what
+    it could do with each item, and for each item it read, its bytes. The HTTP
+    details of a fetch are the host's and are not compared."""
     if own["panel_state"] != theirs["panel_state"] \
             or own["panel_reason"] != theirs["panel_reason"]:
         return "panel " + own["panel_state"] + "/" + own["panel_reason"] + " vs " \
@@ -1814,11 +2046,13 @@ def _evidence_difference(ctx: dict, own: dict, theirs: dict) -> str:
     for evidence_id in _evidence_ids(ctx):
         mine = _source_of(own, evidence_id)
         yours = _source_of(theirs, evidence_id)
-        keys = ["status", "http_status", "truncated"]
+        if _status_class(mine["status"]) != _status_class(yours["status"]):
+            return evidence_id + " status mine=" + mine["status"] + " theirs=" \
+                + yours["status"]
+        keys = ["truncated"]
         item = _item_of(ctx, evidence_id)
         if item is not None and item["kind"] == KIND_PINNED:
-            keys = keys + ["byte_count", "content_digest", "raw_sha256", "title",
-                           "content_type"]
+            keys = keys + ["byte_count", "content_digest", "raw_sha256", "title"]
         for key in keys:
             if mine[key] != yours[key]:
                 return evidence_id + " " + key + " mine=" + repr(mine[key]) + " theirs=" \
@@ -1910,6 +2144,10 @@ class Submission:
     evidence_status: str
     criteria: str                 # canonical JSON of the criteria object
     verdict_resolution: str       # the round the standing verdict comes from
+    tester_contests: u32          # contest rounds the tester has asked for
+    publisher_contests: u32       # contest rounds the publisher has asked for
+    tester_contested: bool        # the tester's one contest that was read
+    publisher_contested: bool     # the publisher's
     resolution_ids: DynArray[str]
 
 
@@ -2105,6 +2343,11 @@ class DecisionShield(gl.Contract):
             "sources": self._source_records(ctx, payload), "markers": payload["markers"],
             "panel_state": payload["panel_state"], "panel_reason": payload["panel_reason"],
             "findings": findings, "excerpt": outcome["excerpt"],
+            # validators compare states, statuses and digests; these are the
+            # leader's own choice of words and passages, grounded but not compared
+            "leader_chosen": ["excerpt", "findings.note", "findings.quotes",
+                              "sources.content_type", "sources.http_status",
+                              "sources.status of an unreadable item"],
         }
 
     def _store(self, submission: Submission, record: dict) -> str:
@@ -2257,7 +2500,9 @@ class DecisionShield(gl.Contract):
             status=SUB_PENDING, submitted_at=now, resolved_at="", finalized_at="",
             window_ends=_epoch_iso(_iso_epoch(now) + spec["resolve_window"]),
             contested=False, verdict=PENDING, reason_code="", severity="",
-            evidence_status="", criteria="{}", verdict_resolution="", resolution_ids=[])
+            evidence_status="", criteria=_canonical(NULL_CRITERIA), verdict_resolution="",
+            tester_contests=u32(0), publisher_contests=u32(0), tester_contested=False,
+            publisher_contested=False, resolution_ids=[])
         challenge.submission_ids.append(submission_id)
         self.submission_ids.append(submission_id)
         self.filed[key] = submission_id
@@ -2272,10 +2517,21 @@ class DecisionShield(gl.Contract):
             self._fail("only the tester withdraws their own case")
         if str(submission.status) != SUB_PENDING:
             self._fail("only a PENDING case can be withdrawn")
+        now = self._now()
+        if _iso_epoch(now) > _iso_epoch(str(submission.window_ends)):
+            self._fail("the resolve window closed at " + str(submission.window_ends)
+                       + "; the case lapses")
         submission.status = SUB_CANCELLED
         submission.verdict = CANCELLED
         submission.reason_code = "WITHDRAWN"
-        submission.finalized_at = self._now()
+        # nothing a round wrote stands on a withdrawn case; the rounds themselves
+        # stay in its history
+        submission.severity = ""
+        submission.evidence_status = ""
+        submission.criteria = _canonical(NULL_CRITERIA)
+        submission.resolved_at = ""
+        submission.verdict_resolution = ""
+        submission.finalized_at = now
         self._count(str(submission.tester), -1)
         return CANCELLED
 
@@ -2289,6 +2545,16 @@ class DecisionShield(gl.Contract):
         now = self._now()
         if _iso_epoch(now) > _iso_epoch(str(submission.window_ends)):
             self._fail("the resolve window closed at " + str(submission.window_ends))
+        rounds = len(submission.resolution_ids)
+        if rounds >= MAX_RESOLVE_ROUNDS:
+            self._fail("this case has used its " + str(MAX_RESOLVE_ROUNDS)
+                       + " resolve rounds; it lapses when its window passes")
+        # the first round is anyone's to ask for. After a round that could not
+        # read the evidence, the retries are the tester's: nobody else can spend
+        # them while a host is down
+        if rounds > 0 and self._sender_hex() != str(submission.tester):
+            self._fail("after a round that could not read the evidence, only the tester"
+                       " resolves again")
         challenge = self._challenge(str(submission.challenge_id))
         resolution_id, outcome = self._adjudicate(submission, challenge, MODE_RESOLVE, now)
         # unavailable evidence is recorded and the case stays PENDING: anyone may
@@ -2302,26 +2568,47 @@ class DecisionShield(gl.Contract):
 
     @gl.public.write
     def contest(self, submission_id: str) -> str:
-        """One more reading, inside the contest window, by the tester or the
-        challenge's publisher. Pinned bytes are verified against the sha256s
-        declared at filing, so a contest cannot bring better evidence; it gives a
-        disputed reading a second, independent panel."""
+        """One more reading, inside the contest window. The tester and the
+        publisher each have one contest that is read. Pinned bytes are verified
+        against the sha256s declared at filing, so a contest cannot bring better
+        evidence; it gives a disputed reading a second, independent panel."""
         submission = self._submission(submission_id)
         if str(submission.status) != SUB_RESOLVED:
             self._fail("only a RESOLVED case is contested")
         challenge = self._challenge(str(submission.challenge_id))
         if self._sender_hex() not in (str(submission.tester), str(challenge.publisher)):
             self._fail("only the tester or the challenge's publisher contests a verdict")
-        if bool(submission.contested):
-            self._fail("this case has been contested once already")
+        by_tester = self._sender_hex() == str(submission.tester)
+        if (bool(submission.tester_contested) if by_tester
+                else bool(submission.publisher_contested)):
+            self._fail("this party has contested this case once already")
         now = self._now()
         if _iso_epoch(now) > _iso_epoch(str(submission.window_ends)):
             self._fail("the contest window closed at " + str(submission.window_ends))
+        asked = int(submission.tester_contests) if by_tester \
+            else int(submission.publisher_contests)
+        if asked >= MAX_CONTEST_ATTEMPTS:
+            self._fail("this party has used its " + str(MAX_CONTEST_ATTEMPTS)
+                       + " contest rounds")
         resolution_id, outcome = self._adjudicate(submission, challenge, MODE_CONTEST, now)
-        # a contest whose evidence was unavailable is recorded but spends nothing:
-        # the standing verdict stays and the contest can be tried again in the window
+        if by_tester:
+            submission.tester_contests = u32(asked + 1)
+        else:
+            submission.publisher_contests = u32(asked + 1)
+        # each party has one contest that is read, and neither can spend the
+        # other's: a party contesting a verdict that favours it uses up only its
+        # own. A contest whose evidence was unavailable is recorded but decides
+        # nothing and spends nothing. Every contest round starts the window again:
+        # an outage cannot run out the other party's contest, and a contest read in
+        # the window's last second still leaves the other party time to answer
         if outcome["verdict"] != EVIDENCE_UNAVAILABLE:
             submission.contested = True
+            if by_tester:
+                submission.tester_contested = True
+            else:
+                submission.publisher_contested = True
+        submission.window_ends = _epoch_iso(
+            _iso_epoch(now) + self._spec(challenge)["contest_window"])
         return resolution_id
 
     @gl.public.write
@@ -2408,11 +2695,15 @@ class DecisionShield(gl.Contract):
     def get_challenge_status(self, challenge_id: str, as_of: str) -> dict:
         """A view has no clock: the caller passes as_of."""
         challenge = self._challenge_or_none(challenge_id)
-        at = _iso_epoch(as_of)
-        if challenge is None or at is None:
+        if challenge is None:
             return {"found": False, "challenge_id": challenge_id}
+        at = _iso_epoch(as_of)
+        if at is None:
+            return {"found": True, "challenge_id": str(challenge.challenge_id),
+                    "as_of_valid": False, "status": str(challenge.status)}
         status = self._challenge_status(challenge, at)
         return {"found": True, "challenge_id": str(challenge.challenge_id),
+                "as_of_valid": True,
                 "status": str(challenge.status), "effective_status": status,
                 "submission_deadline": self._spec(challenge)["submission_deadline"],
                 "accepting_cases": status == CH_OPEN,
@@ -2552,10 +2843,21 @@ class DecisionShield(gl.Contract):
     def get_actions(self, submission_id: str, as_of: str) -> dict:
         """What can happen next, at that time, and who may do it."""
         submission = self._submission_or_none(submission_id)
-        at = _iso_epoch(as_of)
-        if submission is None or at is None:
+        if submission is None:
             return {"found": False, "submission_id": submission_id}
+        at = _iso_epoch(as_of)
+        if at is None:
+            return {"found": True, "submission_id": str(submission.submission_id),
+                    "as_of_valid": False, "status": str(submission.status)}
         status = str(submission.status)
+        rounds = len(submission.resolution_ids)
+        challenge = self.challenges[str(submission.challenge_id)]
+        both = str(challenge.publisher) == str(submission.tester)
+        tester_may = not bool(submission.tester_contested) \
+            and int(submission.tester_contests) < MAX_CONTEST_ATTEMPTS
+        publisher_may = tester_may if both else (
+            not bool(submission.publisher_contested)
+            and int(submission.publisher_contests) < MAX_CONTEST_ATTEMPTS)
         window_open = at <= _iso_epoch(str(submission.window_ends))
         effective = status
         if status == SUB_PENDING and not window_open:
@@ -2563,13 +2865,22 @@ class DecisionShield(gl.Contract):
                 else SUB_CANCELLED
         return {
             "found": True, "submission_id": str(submission.submission_id),
+            "as_of_valid": True,
             "status": status, "effective_status": effective,
             "window_ends": str(submission.window_ends), "window_open": window_open,
-            "may_resolve": status == SUB_PENDING and window_open,
+            "may_resolve": status == SUB_PENDING and window_open
+            and rounds < MAX_RESOLVE_ROUNDS,
+            "resolve_by": "anyone" if rounds == 0 else "the tester",
+            "resolve_rounds_left": max(0, MAX_RESOLVE_ROUNDS - rounds)
+            if status == SUB_PENDING else 0,
             "may_lapse": status == SUB_PENDING and not window_open,
-            "may_withdraw": status == SUB_PENDING,
-            "may_contest": status == SUB_RESOLVED and not bool(submission.contested)
-            and window_open,
+            "may_withdraw": status == SUB_PENDING and window_open,
+            "contest_rounds_left": {
+                "tester": MAX_CONTEST_ATTEMPTS - int(submission.tester_contests),
+                "publisher": MAX_CONTEST_ATTEMPTS - int(submission.publisher_contests)},
+            "may_contest": {
+                "tester": status == SUB_RESOLVED and window_open and tester_may,
+                "publisher": status == SUB_RESOLVED and window_open and publisher_may},
             "may_finalize": status == SUB_RESOLVED and not window_open,
             "contested": bool(submission.contested),
         }
@@ -2615,9 +2926,12 @@ class DecisionShield(gl.Contract):
             "challenge_statuses": list(CHALLENGE_STATUSES),
             "submission_statuses": list(SUBMISSION_STATUSES),
             "source_statuses": list(SOURCE_STATUSES), "subjects": list(BUILT_IN_SUBJECTS),
+            "evaluator_markers": list(EVALUATOR_MARKERS) + list(VERDICT_MARKERS),
             "caps": {"evidence_items": MAX_EVIDENCE, "prohibited_factors": MAX_FACTORS,
                      "domains": MAX_DOMAINS, "quotes": MAX_QUOTES,
                      "open_per_wallet": MAX_OPEN_PER_WALLET, "page": PAGE_LIMIT,
+                     "resolve_rounds": MAX_RESOLVE_ROUNDS,
+                     "contest_rounds_per_party": MAX_CONTEST_ATTEMPTS,
                      "quote_chars": QUOTE_CAP, "evidence_bytes": BODY_BYTES_CAP,
                      "panel_chars": TEXT_CAP, "digit_run": DIGIT_RUN_LIMIT},
             "windows": {"min": MIN_WINDOW, "max": MAX_WINDOW},

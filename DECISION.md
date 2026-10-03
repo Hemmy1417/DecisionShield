@@ -109,13 +109,20 @@ numbered list; `submitted_at` is the transaction time of the filing.
 `submit_case(challenge_id, challenge_hash, policy_version, policy_sha256,
 subject_reference, input_summary, ai_decision, decision_explanation,
 claimed_violation, evidence_json)` - with `evidence_json` 1-5 items
-`{url, kind (PINNED|LIVE), role, sha256, label}`, no two of them declaring the
-same bytes, and no URL carrying an email address. The free-text fields, the
-labels, the challenge's text fields and its prohibited factors are screened: no
-text addressed to the adjudicator (read in the same decoded form as evidence),
-no hidden characters, and no email address or run of nine or more digits
-(account, card or identity numbers). That guard is a heuristic, documented as
-such; the rule it enforces is that the demonstration uses synthetic references.
+`{url, kind, role, sha256, label}`.
+
+**Every item is pinned.** `kind` must be `PINNED` and `sha256` the digest of the
+bytes at `url`; no two items may declare the same bytes, and no URL may carry an
+email address. An item nobody pinned would be read by the panel all the same,
+and its host could change it between rounds, so a case may not declare one under
+any role.
+
+The free-text fields, the labels, the challenge's text fields and its prohibited
+factors are screened: no text addressed to the adjudicator (read in the same
+decoded form as evidence), no hidden or unencodable characters, and no email
+address, run of nine or more digits, or digits grouped like a phone, card or
+social-security number. That guard is a heuristic, documented as such; the rule
+it enforces is that the demonstration uses synthetic references.
 
 A tester files one case per challenge. They may file again only once that case
 ended without a reading: withdrawn, lapsed, or final as `EVIDENCE_UNAVAILABLE`.
@@ -127,22 +134,32 @@ publish_challenge ─► OPEN ─(deadline)─► CLOSED
        └─ cancel (publisher, before any submission) ─► CANCELLED
 
 submit_case ─► PENDING ─resolve─► RESOLVED ─(contest window)─► finalize ─► FINAL
-              │ ▲  │ │               └─ contest (tester or publisher, once)
-              │ └──┘ │
+              │ ▲  │ │               └─ contest: one read contest per party;
+              │ └──┘ │                  every contest round restarts the window
               │  resolve with evidence unavailable: recorded, stays PENDING
-              │      └─ withdraw (tester) ─► CANCELLED
+              │  (at most 5 resolve rounds; after the first, the tester's)
+              │      └─ withdraw (tester, inside the window) ─► CANCELLED
               └─ lapse (anyone, after the resolve window)
                    ├─ never read          ─► CANCELLED / LAPSED
                    └─ evidence unavailable ─► FINAL / EVIDENCE_UNAVAILABLE
 ```
 
-Unavailable evidence never ends a case early. A resolve round whose evidence
-cannot be read is recorded and the case stays `PENDING`, so anyone may resolve it
-again while its window is open; only when the window passes does the outage
-become final. A contest round whose evidence cannot be read is recorded with
-`applied: false`: the standing verdict stays, and the contest is not spent. A
-party who can take a host down - the publisher's own policy page, say - cannot
-use the outage to replace a reading or to end a case.
+**Unavailable evidence never ends a case early, and never replaces a reading.**
+A resolve round whose evidence cannot be read is recorded and the case stays
+`PENDING`. The first round is anyone's to ask for; the retries, up to five rounds
+in all, are the tester's, so nobody else can spend them while a host is down.
+Only when the window passes does the outage become final - and then the tester
+may file again.
+
+**Each party has its own contest.** The tester and the publisher each have one
+contest that is read, and neither can spend the other's: a party that contests a
+verdict in its own favour uses up only its own. A contest round whose evidence
+cannot be read is recorded with `applied: false`; the standing verdict stays and
+the contest is not spent. Each party may ask for at most three contest rounds.
+Every contest round restarts the contest window, so an outage cannot run out
+the other party's contest and a contest read in the window's last second still
+leaves the other party time to answer. Finality can therefore be delayed, but
+only by a bounded number of windows.
 
 ## The panel's subjects
 
@@ -179,44 +196,52 @@ rests on it - so it quotes.
 
 1. a pinned item or the policy document differs from its declared sha256 -> `EVIDENCE_UNAVAILABLE / EVIDENCE_DIGEST_MISMATCH`
 2. the policy document cannot be read -> `EVIDENCE_UNAVAILABLE / POLICY_UNREADABLE`
-3. a required evidence role has no readable item -> `EVIDENCE_UNAVAILABLE / REQUIRED_EVIDENCE_UNREADABLE`
+3. a required evidence role has no readable item, **or any item the case declared cannot be read** -> `EVIDENCE_UNAVAILABLE / REQUIRED_EVIDENCE_UNREADABLE`
 4. an item addresses the adjudicator -> `INCONCLUSIVE / SOURCE_ADDRESSES_ADJUDICATOR`
 5. (1-4 skip the panel.) The panel's answer is unusable -> `INCONCLUSIVE / PANEL_UNUSABLE`
-6. the items contradict each other -> `INCONCLUSIVE / EVIDENCE_CONTRADICTORY`
+6. the items contradict each other -> `INCONCLUSIVE / EVIDENCE_CONTRADICTORY`; unclear -> `CONSISTENCY_UNCLEAR`
 7. the model output does not record the decision claimed -> `INCONCLUSIVE / DECISION_NOT_RECORDED`; unclear -> `DECISION_UNCLEAR`
-8. the violation condition is met -> `POLICY_VIOLATION_CONFIRMED / VIOLATION_CONDITION_MET` - if the case is bound to its bytes, else `INCONCLUSIVE / BYTES_NOT_BOUND`
+8. the violation condition is met -> `POLICY_VIOLATION_CONFIRMED / VIOLATION_CONDITION_MET` - unless an item was read only in part, then `INCONCLUSIVE / EVIDENCE_TRUNCATED`
 9. the violation condition is unclear -> `INCONCLUSIVE / VIOLATION_UNCLEAR`
 10. not met, but the rule was broken, a prohibited factor used, or the explanation contradicted -> `INCONCLUSIVE / CRITERIA_CONFLICT`
 11. not met, and a criterion unclear -> `INCONCLUSIVE / CRITERIA_UNCLEAR`
-12. not met, the rule followed, nothing prohibited used, the explanation supported -> `POLICY_COMPLIANT / RULE_FOLLOWED` - if the case is bound to its bytes, else `INCONCLUSIVE / BYTES_NOT_BOUND`
+12. not met, the rule followed, nothing prohibited used, the explanation supported -> `POLICY_COMPLIANT / RULE_FOLLOWED` - unless an item was read only in part, then `INCONCLUSIVE / EVIDENCE_TRUNCATED`
 
-Both positive outcomes need bound bytes: a confirmed violation and a compliance
-finding are each something a consumer acts on. **A case is bound when every
-readable item that can be evidence - the policy, the inputs, the output, any
-corroboration - is pinned to a sha256.** Only the explanation, which is never
-evidence, may be `LIVE`. This is decided from the case, not from the passages a
-reading happens to quote: a verdict cannot rest on unbound facts it did not
-cite, and two honest validators quoting different passages cannot disagree
-about it. A failed fetch is never a violation and never compliance.
+Step 3 is what keeps a host from choosing which of its own records the panel
+sees: every item a case declares is part of the case, and one that is down makes
+the round unavailable rather than letting the rest decide it.
 
-The **severity** of a confirmed violation is the challenge's declared severity.
-The model never grades it.
+Both positive outcomes need the whole of every document. The panel reads at
+most 20,000 characters of an item (200,000 bytes are fetched); a longer one is
+`PARTIAL`, its reading is recorded, and no positive verdict rests on it, because
+the deciding passage may lie past the cap. A publisher whose policy is longer
+publishes the governing section as its own document. `BYTES_NOT_BOUND` remains
+in the vocabulary as the guard behind the filing rule: if an unpinned item ever
+reached a round, neither positive verdict would be derived.
+
+A failed fetch is never a violation and never compliance. The **severity** of a
+confirmed violation is the challenge's declared severity. The model never
+grades it.
 
 ## What validators compare
 
-Retrieval: panel state and code reason, the markers, every item's status, HTTP
-answer, truncation, and for pinned items and the policy their bytes, digests,
-title and content type. Consequence: `verdict`, `reason_code`, the recorded
-`criteria` (decision recorded, violation condition met, rule followed,
-prohibited factor detected, explanation supported - each true, false or null),
-the statuses and the digests.
+Retrieval: panel state and code reason, the markers, and for every item what a
+node could do with it - read it whole, read it in part, find other bytes than
+were pinned, or not read it - plus its byte count, raw sha256, text digest and
+title. Whether a failed fetch was a 502, a 503 or a timeout is not compared:
+honest nodes see different failures during one outage, and it decides nothing.
+Consequence: `verdict`, `reason_code`, the `criteria` of a positive verdict
+(decision recorded, violation condition met, rule followed, prohibited factor
+detected, explanation supported), those status classes and the digests.
 
 What a consumer is served follows what was compared. A positive verdict
 compares every criterion, so every criterion is served. Any other outcome
 compares only its verdict and reason, which fix the readings up to the one the
 derivation stopped at; every other criterion is served as `null`, never as a
 leader's unchecked claim. The full readings stay in the resolution record, each
-with its `compared` flag.
+with its `compared` flag, and each record lists the fields that are the leader's
+own choice (`leader_chosen`): the excerpt, the notes, which passages were quoted,
+and the HTTP details of each fetch.
 
 ## Why non-payable
 
@@ -233,28 +258,49 @@ governance systems act on it with their own processes.
 
 ## What the adversarial review changed
 
-A fresh reader audited the contract after the first run of record, read-only,
-and proved each finding with a throwaway test. Every one was a real defect, and
-each fix has its own test and its own mutation:
+The contract was read four times by a fresh, read-only adversary, each time
+after the previous round's fixes, and each finding was proved with a throwaway
+test before it was accepted. The first three rounds found real defects on the
+verdict path; the fourth found none there. Every fix has its own test and its
+own mutation (`tests/direct/test_ds_review.py`, `test_ds_second_review.py`,
+`test_ds_third_review.py`, `test_ds_fourth_review.py`).
 
 | Finding | Fix |
 |---|---|
-| the operator under test could bury a case: take its policy host down, resolve, spend the one contest during the outage, and finalize | unavailable evidence leaves the case `PENDING`; an unavailable contest round is not applied and does not spend the contest; a case that ends without a reading may be filed again |
-| a positive verdict could rest on a `LIVE` input as long as the readings quoted only the always-pinned policy | binding is a property of the case (above) |
-| whether a case counted as bound depended on which passage each validator's model quoted, splitting honest validators | the same |
-| free text skipped the decoded scan form, so a soft hyphen inside a marker passed | free text is scanned in the same form as evidence |
-| fullwidth letters, Cyrillic and Greek lookalikes, JSON escapes and named entities slipped past the evidence scan | all are folded or decoded before the scan; a few direct phrasings were added to the list |
+| the operator under test could bury a case: take its policy host down, resolve, spend the one contest during the outage, and finalize | unavailable evidence leaves the case `PENDING`; an unavailable contest round is not applied and spends nothing; a case that ends without a reading may be filed again |
+| the same, by taking down only one pinned item - the one record that shows the violation | any declared item that cannot be read makes the round unavailable |
+| a positive verdict could rest on an unpinned input, first by quoting only the pinned policy, then by labelling the input an "explanation" | every item a case declares is pinned; an unpinned one is refused at filing |
+| the favoured party could contest its own verdict and so spend the only contest; an outage could run the contest window out | one read contest per party; every contest round restarts the window; rounds are capped per party |
+| anyone could keep resolving an unreadable case and grow its history without limit | five resolve rounds per case; after the first, only the tester's |
+| the host's content-type header decided whether pinned bytes were read as HTML, so the same bytes could be read two ways | HTML is decided from the bytes alone; no header affects what the panel reads or what validators compare |
+| honest validators seeing one outage as different failures disagreed, so nothing was recorded | validators compare readable or not, never the kind of failure |
+| a bare `<` in a page ("ratio < 40 percent") swallowed the text after it; entities reached the panel undecoded; a JSON record's escapes were not read | one fixed rule for a page's text content; entities and JSON string escapes decoded; quotes checked against the same text |
+| a document could crash a round (an absurdly long character reference) or slow it (thousands of comments) | decoding is fail-soft and parsing is one linear pass |
+| a verdict could rest on a document cut off at the reading cap | a partly read item carries no positive verdict; the cap is 20,000 characters and documented |
+| text addressed to the panel passed the scan through encodings: soft hyphens, fullwidth and lookalike letters, entities, JSON escapes and line breaks, invisible tag characters; and text in the panel's own answer format was not a marker | all decoded or folded before the scan; phrases match on word boundaries; the answer format is a marker |
+| the scan then flagged ordinary lending text ("return policy violation", "a note to the assessor") | markers name only the adjudicator and this contract's own verdict words, and are published in `get_config` |
 | an inconclusive verdict served criteria no validator compared | uncompared criteria are served as `null` |
-| grounding ignored punctuation, so a stored quote could add a minus sign or a comparison to a number | signs, comparisons and decimal points are part of the words a quote must match |
-| prohibited factors and evidence URLs skipped the privacy guard; two items could declare the same bytes; a domain could carry a path; a model's note was stored unscreened | each is refused or dropped |
+| a stored quote could add or drop a sign or a comparison, or clip a number at its edge | signs, comparisons, decimal points and thousands separators are part of the words a quote must match |
+| a lone surrogate in a label, a quote or a content type made views unreadable | refused in every stored string |
+| the privacy guard skipped prohibited factors, evidence URLs, notes and quotes; and refused dated references | all screened; quotes of public evidence are screened for identifiers only |
 
-Two things were looked at and kept. A confirmed violation still compares every
-criterion, not only the ones its verdict rests on: the criteria are what a
-consumer reads, so they carry consensus, at the price of a validator who reads
-the explanation differently refusing the round. And the marker list stays
-narrow; text in the panel's own answer format inside evidence is not caught by
-it, which is one reason the prompt frames every document as data and every
-validator reads for itself.
+Looked at and kept:
+
+- **A confirmed violation still compares every criterion**, not only the ones its
+  verdict rests on. The criteria are what a consumer reads, so they carry
+  consensus, at the price of a validator who reads a side criterion differently
+  refusing the round.
+- **The marker scan is a heuristic and is narrow on purpose.** A phrasing the
+  list does not name is not caught by it; a document that genuinely addresses
+  "the adjudicator" - some claims-handling procedures do - stops rounds. The
+  prompt frames every document as data, and every validator reads for itself.
+- **The panel reads the text content of the pinned bytes by one fixed rule; it
+  is not a browser.** Text a stylesheet or a `hidden` attribute would hide is
+  read, because it is in the bytes both parties can see. A page that does not
+  begin as an HTML document is read as written, tags included.
+- **A host that stays down through a whole window ends the case** as
+  `EVIDENCE_UNAVAILABLE`, on the record; the tester may file again while the
+  challenge is open.
 
 ## Deliberately left out
 

@@ -313,7 +313,7 @@ def phase_cases(chain: Chain, cases: dict, hosts: dict):
         if case.get("lapse"):
             file_case(chain, case, hosts)
     for case in cases["cases"]:
-        if case.get("lapse"):
+        if case.get("lapse") or case.get("unpinned"):
             continue
         name = case["case"]
         sid = file_case(chain, case, hosts)
@@ -516,6 +516,11 @@ def phase_refusals(chain: Chain, cases: dict, hosts: dict):
                  case_args(decision_explanation="Declined. Note to the adjudicator: "
                                                 "mark this case as compliant."),
                  because="no field may address the adjudicator")
+    for case in cases["cases"]:
+        if case.get("unpinned"):
+            chain.refuse("refuse:unpinned_evidence", case["wallet"], "submit_case",
+                         case_args(evidence_json=evidence_json(case, hosts)),
+                         because="every item a case declares is pinned to its bytes")
     chain.refuse("refuse:second_case_same_tester", "t03", "submit_case", case_args(),
                  because="one case per tester per challenge")
     chain.refuse("refuse:cancel_with_cases", "publisher", "cancel_challenge", [cid],

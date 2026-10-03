@@ -238,9 +238,10 @@ def build() -> tuple:
         case("DS10", "t10",
              [item(I7, "Application inputs", "CASE_INPUT", kind="LIVE"),
               item(D7, "Recorded decision", "MODEL_OUTPUT", kind="LIVE")],
-             "INCONCLUSIVE", "BYTES_NOT_BOUND",
-             "the same violating case as DS01 on unbound bytes: a verdict may not rest on "
-             "documents nobody pinned"),
+             "REFUSED", "UNPINNED_EVIDENCE",
+             "the same violating case as DS01 with nothing pinned: a case may not declare "
+             "evidence that is not bound to its bytes, so it is refused at filing",
+             unpinned=True),
         case("DS11", "t11",
              [item(I7, "Application inputs", "CASE_INPUT"),
               item(D7, "Recorded decision", "MODEL_OUTPUT")],
