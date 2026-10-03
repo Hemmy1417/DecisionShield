@@ -1,0 +1,177 @@
+85 mutations, 0 anchor problems
+accept-control: unmodified copy must pass ...
+control green; 85 mutations over 3 job(s)
+
+  [1/85] killed  : a 404 is a generic failure
+  [2/85] killed  : a redirect is read as a retrieved document
+  [3/85] killed  : a forbidden document is a generic failure
+  [4/85] killed  : a binary content type is read
+  [5/85] killed  : an oversized document is not marked partial
+  [6/85] killed  : an undecodable body is read
+  [7/85] killed  : a pinned item's bytes are not checked against the declared digest
+  [8/85] killed  : a digest mismatch is judged by the panel anyway
+  [9/85] killed  : an unreadable policy is judged anyway
+  [10/85] killed  : a required role that cannot be read is judged anyway
+  [11/85] killed  : a document addressing the adjudicator is judged anyway
+  [12/85] killed  : text in the visible body is not scanned
+  [13/85] killed  : markup and attributes are not scanned
+  [14/85] killed  : a finding may be quoted from the explanation
+  [15/85] killed  : the title is not scanned
+  [16/85] killed  : a false explanation counts as contradictory evidence
+  [17/85] killed  : the decision may be read from any item
+  [18/85] killed  : the gate lets a reading quote any item
+  [19/85] killed  : an assertion about the case needs no quote
+  [20/85] killed  : a spliced quote is accepted when the panel answers
+  [21/85] killed  : a quote need not ground in the text this node retrieved
+  [22/85] killed  : prohibited factors are asked about when none are declared
+  [23/85] killed  : a spliced quote passes the gate
+  [24/85] killed  : a code reason about evidence is not EVIDENCE_UNAVAILABLE
+  [25/85] killed  : a code reason is overridden by the panel's reading
+  [26/85] killed  : an unusable panel answer reaches a verdict
+  [27/85] killed  : contradictory evidence reaches a verdict
+  [28/85] killed  : unclear consistency reaches a verdict
+  [29/85] killed  : a decision the output does not record is judged anyway
+  [30/85] killed  : an unclear decision is judged anyway
+  [31/85] killed  : a violation needs no bound bytes
+  [32/85] killed  : an unclear violation falls through to compliance
+  [33/85] killed  : a broken rule beside an unmet violation is compliance
+  [34/85] killed  : a prohibited factor beside an unmet violation is compliance
+  [35/85] killed  : a contradicted explanation beside an unmet violation is compliance
+  [36/85] killed  : an unclear criterion is compliance
+  [37/85] killed  : compliance needs no bound bytes
+  [38/85] killed  : the severity is not the challenge's
+  [39/85] killed  : a live item counts as bound
+  [40/85] killed  : the consequence is not compared
+  [41/85] killed  : a positive verdict's criteria are not compared
+  [42/85] killed  : the leader's payload is gated against its own text, not this node's
+  [43/85] killed  : a transient failure ratifies a different failure
+  [44/85] killed  : a payload about another case is accepted
+  [45/85] killed  : the policy may come from any host
+  [46/85] killed  : the policy need not be bound
+  [47/85] killed  : the model output need not be required
+  [48/85] killed  : prohibited factors may repeat
+  [49/85] killed  : the severity may be anything
+  [50/85] killed  : the windows are unbounded
+  [51/85] killed  : a challenge may close in the past
+  [52/85] killed  : challenge text may address the adjudicator
+  [53/85] killed  : an IP literal is a host
+  [54/85] killed  : an email address passes the privacy guard
+  [55/85] killed  : a long digit run passes the privacy guard
+  [56/85] killed  : a space continues a digit run
+  [57/85] killed  : free text skips the privacy guard
+  [58/85] killed  : a pinned item needs no digest
+  [59/85] killed  : a live item may declare a digest it is not held to
+  [60/85] killed  : an item may claim the policy role
+  [61/85] killed  : an item may come from any host
+  [62/85] killed  : the same document may be declared twice
+  [63/85] killed  : a required role may be missing at filing
+  [64/85] killed  : a stale policy version is accepted
+  [65/85] killed  : a policy hash mismatch is accepted
+  [66/85] killed  : the evidence list is unbounded
+  [67/85] killed  : the challenge hash is not checked
+  [68/85] killed  : a case may be filed after the deadline
+  [69/85] killed  : a case may be filed against a cancelled challenge
+  [70/85] killed  : one tester may file twice
+  [71/85] killed  : the claimed violation may be anything
+  [72/85] killed  : a case may be resolved twice
+  [73/85] killed  : the open-case cap does not hold
+  [74/85] killed  : a case may be resolved after its window
+  [75/85] killed  : a verdict may be contested twice
+  [76/85] killed  : a stranger may contest
+  [77/85] killed  : a verdict may be contested after its window
+  [78/85] killed  : anyone may withdraw a case
+  [79/85] killed  : a case may lapse while its window is open
+  [80/85] killed  : a verdict may be final inside its contest window
+  [81/85] killed  : a challenge with cases may be cancelled
+  [82/85] killed  : anyone may cancel a challenge
+  [83/85] killed  : a record stores a live item's bytes
+  [84/85] killed  : every reading is marked compared
+  [85/85] killed  : the violation count is not corrected when a contest overturns
+
+killed:   a redirect is read as a retrieved document
+killed:   a 404 is a generic failure
+killed:   a forbidden document is a generic failure
+killed:   a binary content type is read
+killed:   an undecodable body is read
+killed:   an oversized document is not marked partial
+killed:   a pinned item's bytes are not checked against the declared digest
+killed:   a digest mismatch is judged by the panel anyway
+killed:   an unreadable policy is judged anyway
+killed:   a required role that cannot be read is judged anyway
+killed:   a document addressing the adjudicator is judged anyway
+killed:   text in the visible body is not scanned
+killed:   markup and attributes are not scanned
+killed:   the title is not scanned
+killed:   a finding may be quoted from the explanation
+killed:   a false explanation counts as contradictory evidence
+killed:   the decision may be read from any item
+killed:   the gate lets a reading quote any item
+killed:   an assertion about the case needs no quote
+killed:   a spliced quote is accepted when the panel answers
+killed:   a spliced quote passes the gate
+killed:   a quote need not ground in the text this node retrieved
+killed:   prohibited factors are asked about when none are declared
+killed:   a code reason about evidence is not EVIDENCE_UNAVAILABLE
+killed:   a code reason is overridden by the panel's reading
+killed:   an unusable panel answer reaches a verdict
+killed:   contradictory evidence reaches a verdict
+killed:   unclear consistency reaches a verdict
+killed:   a decision the output does not record is judged anyway
+killed:   an unclear decision is judged anyway
+killed:   a violation needs no bound bytes
+killed:   an unclear violation falls through to compliance
+killed:   a broken rule beside an unmet violation is compliance
+killed:   a prohibited factor beside an unmet violation is compliance
+killed:   a contradicted explanation beside an unmet violation is compliance
+killed:   an unclear criterion is compliance
+killed:   compliance needs no bound bytes
+killed:   a live item counts as bound
+killed:   the severity is not the challenge's
+killed:   the consequence is not compared
+killed:   a positive verdict's criteria are not compared
+killed:   the leader's payload is gated against its own text, not this node's
+killed:   a transient failure ratifies a different failure
+killed:   a payload about another case is accepted
+killed:   the policy may come from any host
+killed:   the policy need not be bound
+killed:   the model output need not be required
+killed:   prohibited factors may repeat
+killed:   the severity may be anything
+killed:   the windows are unbounded
+killed:   a challenge may close in the past
+killed:   challenge text may address the adjudicator
+killed:   an IP literal is a host
+killed:   an email address passes the privacy guard
+killed:   a long digit run passes the privacy guard
+killed:   a space continues a digit run
+killed:   free text skips the privacy guard
+killed:   a pinned item needs no digest
+killed:   a live item may declare a digest it is not held to
+killed:   an item may claim the policy role
+killed:   an item may come from any host
+killed:   the same document may be declared twice
+killed:   a required role may be missing at filing
+killed:   the evidence list is unbounded
+killed:   a stale policy version is accepted
+killed:   a policy hash mismatch is accepted
+killed:   the challenge hash is not checked
+killed:   a case may be filed after the deadline
+killed:   a case may be filed against a cancelled challenge
+killed:   the claimed violation may be anything
+killed:   one tester may file twice
+killed:   the open-case cap does not hold
+killed:   a case may be resolved twice
+killed:   a case may be resolved after its window
+killed:   a verdict may be contested twice
+killed:   a stranger may contest
+killed:   a verdict may be contested after its window
+killed:   a verdict may be final inside its contest window
+killed:   a case may lapse while its window is open
+killed:   anyone may withdraw a case
+killed:   a challenge with cases may be cancelled
+killed:   anyone may cancel a challenge
+killed:   a record stores a live item's bytes
+killed:   every reading is marked compared
+killed:   the violation count is not corrected when a contest overturns
+
+mutations: 85 killed, 0 survived, 0 anchor missing

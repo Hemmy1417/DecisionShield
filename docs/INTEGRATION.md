@@ -63,8 +63,10 @@ No web access, no prompt, no equivalence principle, no parsing of the evidence.
 }
 ```
 
-Each is true, false or null (unclear, not reached, or - for prohibited factors -
-none declared). For a positive verdict every validator agreed on every value.
+Each is true, false or null (unclear, not reached, not compared, or - for
+prohibited factors - none declared). For a positive verdict every validator
+agreed on every value. For any other outcome only the values its reason fixed are
+served; the rest are `null`, never one node's unchecked reading.
 
 ## Reading a verdict correctly
 
@@ -75,6 +77,12 @@ none declared). For a positive verdict every validator agreed on every value.
 3. **The severity is the challenge's.** It is the severity the publisher declared
    for this violation condition, not a model's grade.
 4. **A verdict is about one case.** It says nothing about the model elsewhere.
+5. **`EVIDENCE_UNAVAILABLE` on a `PENDING` case is not the end.** It means the
+   last round could not read the evidence; the case can be resolved again while
+   its window is open. It is final only when `final` is true.
+6. **`resolution_id` is the round the standing verdict came from.** A contest
+   round whose evidence was unavailable is in `get_history` with
+   `applied: false` and does not change the verdict.
 
 ## Writing, for the parties who do
 
@@ -82,12 +90,12 @@ none declared). For a positive verdict every validator agreed on every value.
 |---|---|
 | `publish_challenge(challenge_json)` | anyone; the sender becomes the publisher |
 | `cancel_challenge(challenge_id)` | the publisher, before the first case |
-| `submit_case(challenge_id, challenge_hash, policy_version, policy_sha256, subject_reference, input_summary, ai_decision, decision_explanation, claimed_violation, evidence_json)` | the tester; one per challenge |
+| `submit_case(challenge_id, challenge_hash, policy_version, policy_sha256, subject_reference, input_summary, ai_decision, decision_explanation, claimed_violation, evidence_json)` | the tester; one per challenge, again only after a case that ended without a reading |
 | `withdraw_case(submission_id)` | the tester, while pending |
-| `resolve(submission_id)` | anyone, inside the resolve window |
+| `resolve(submission_id)` | anyone, inside the resolve window; again after a round whose evidence was unavailable |
 | `contest(submission_id)` | the tester or the publisher, once, inside the contest window |
 | `finalize(submission_id)` | anyone, after the contest window |
-| `lapse_case(submission_id)` | anyone, after the resolve window, if nobody resolved it |
+| `lapse_case(submission_id)` | anyone, after the resolve window, if no reading was reached: `CANCELLED` if nobody resolved it, `FINAL` as `EVIDENCE_UNAVAILABLE` if every round found the evidence unavailable |
 
 `evidence_json` lists 1 to 5 items `{"url", "kind", "role", "sha256", "label"}`;
 `role` is `CASE_INPUT`, `MODEL_OUTPUT`, `EXPLANATION` or `CORROBORATION`, and the

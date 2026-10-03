@@ -153,6 +153,46 @@ def test_a_positive_verdict_never_rests_on_the_explanation_or_unbound_bytes(clie
             for quote in finding["quotes"]:
                 assert roles[quote["evidence_id"]]["role"] != "EXPLANATION"
                 assert roles[quote["evidence_id"]]["kind"] == "PINNED"
+        # binding is a property of the case: every readable item that can be
+        # evidence is pinned, whatever the readings quoted
+        for source in resolution["sources"]:
+            if source["role"] != "EXPLANATION" and source["status"] in ("RETRIEVED", "PARTIAL"):
+                assert source["kind"] == "PINNED", source["evidence_id"]
+
+
+@pytest.mark.skipif(not TRANSCRIPT.exists(), reason="no live run recorded yet")
+def test_unavailable_evidence_never_ended_a_case_early(client, record):
+    checked = 0
+    for name, entry in steps().items():
+        if name.startswith("resolve:") and entry.get("observed_verdict") == "EVIDENCE_UNAVAILABLE":
+            assert entry["status_after"] == "PENDING", name
+            checked += 1
+    assert checked > 0
+    lapsed = [e for n, e in steps().items() if n.startswith("lapse:")
+              and e.get("expected_verdict") == "EVIDENCE_UNAVAILABLE, final"]
+    for entry in lapsed:
+        verdict = read(client, record, "get_verdict", [entry["args"][0]])
+        assert verdict["verdict"] == "EVIDENCE_UNAVAILABLE" and verdict["final"] is True
+
+
+@pytest.mark.skipif(not TRANSCRIPT.exists(), reason="no live run recorded yet")
+def test_criteria_nobody_compared_are_served_as_null(client, record):
+    checked = 0
+    for name, entry in steps().items():
+        if not name.startswith("resolve:") or "resolution_id" not in entry:
+            continue
+        resolution = read(client, record, "get_resolution",
+                          [entry["resolution_id"]])["resolution"]
+        keys = {"DECISION_RECORDED": "decision_recorded",
+                "VIOLATION_CONDITION": "violation_condition_met",
+                "DECISION_RULE": "rule_followed",
+                "PROHIBITED_FACTOR": "prohibited_factor_detected",
+                "EXPLANATION": "explanation_supported"}
+        for finding in resolution["findings"]:
+            if finding["id"] in keys and not finding["compared"]:
+                assert resolution["criteria"][keys[finding["id"]]] is None, name
+                checked += 1
+    assert checked > 0
 
 
 @pytest.mark.skipif(not TRANSCRIPT.exists(), reason="no live run recorded yet")

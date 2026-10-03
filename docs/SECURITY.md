@@ -38,6 +38,22 @@ professional oversight, and it provides no legal or regulatory certification.
 | tester (red team, model risk, an advocate) | file one case per challenge; withdraw before resolution; contest once | file twice, cite a host the challenge did not name, change evidence after filing |
 | keeper (anyone) | resolve, finalise, lapse | change any outcome |
 | validators | reproduce the round and refuse the leader | write a verdict; code derives it |
+| a malicious leader | propose a forged payload | get it stored: every validator re-fetches, re-reads and re-derives |
+| a malicious validator minority | vote against an honest leader | outvote an honest majority |
+| a malicious evidence host or web page | serve different bytes, or text addressed to the panel | pass a pinned digest check; stop being caught by the marker scan for the visible, hidden and markup forms it covers |
+| a downstream consumer | read any view | change anything; it acts in its own process |
+
+## Trust assumptions
+
+- An honest majority of validators, running independent model calls.
+- The hosts a challenge names serve the bytes the case pinned; if they do not,
+  the case is `EVIDENCE_UNAVAILABLE`, not a verdict.
+- The publisher's policy says what the publisher means: DecisionShield judges
+  against the policy as written and hashed, not as intended.
+- Transaction time (`gl.message_raw["datetime"]`) is the clock for deadlines
+  and windows.
+- The model panel can read English prose policies and structured case records;
+  where honest models split, nothing is stored.
 
 ## Input attacks
 
@@ -48,9 +64,15 @@ recorded output.
 
 **Prompt injection aimed at the adjudicator.** Every document is scanned in code -
 visible text, markup and attributes, title - with hidden characters, soft hyphens,
-numeric entities and tag or comment splits undone. Text addressed to the
-adjudicator stops the round as `SOURCE_ADDRESSES_ADJUDICATOR`. Every free-text
-field of the challenge and the case is screened the same way at write time.
+the zero-width joiner, numeric and word-splitting named entities, JSON escapes
+and tag or comment splits undone, and fullwidth forms and Cyrillic or Greek
+lookalike letters folded to Latin. Text addressed to the adjudicator stops the
+round as `SOURCE_ADDRESSES_ADJUDICATOR`. Every free-text field of the challenge
+and the case is scanned in the same decoded form at write time, and a model's
+note that carries such text is dropped. The list is narrow and the scan is a
+heuristic: text written in the panel's own answer format, or a phrasing the list
+does not name, is not caught by it. The second line is the prompt, which frames
+every document as data, and the third is that every validator reads for itself.
 
 **Injection aimed at the financial AI** is the subject of an adversarial-input
 case, not an attack on this panel. The marker list is narrow on purpose, so such
@@ -64,8 +86,24 @@ evidence.
 **A stale policy.** A case commits to the challenge hash, the policy version and
 the policy document's sha256; any mismatch is refused at filing.
 
-**Unbound evidence.** A `LIVE` item has no digest; neither positive verdict may
-rest on one.
+**Unbound evidence.** A `LIVE` item has no digest. Neither positive verdict is
+reached unless every readable item that can be evidence is pinned; only the
+explanation may be `LIVE`. This is decided from the case, so a reading that
+quotes only the policy cannot carry a verdict that rests on unbound inputs.
+
+**Burying a case with an outage.** The publisher usually hosts the policy. If it
+takes that host down, a resolve round records `EVIDENCE_UNAVAILABLE` and the case
+stays `PENDING`, open to be resolved again once the host is back; a contest round
+during an outage is recorded but neither replaces the standing verdict nor
+spends the contest. If the evidence stays unreadable through the whole window,
+the case becomes final as `EVIDENCE_UNAVAILABLE` - the outage stays on the record
+- and the tester may file again while the challenge is open.
+
+**Altered quotes.** A stored quote must match the item's words in order, and a
+minus sign, a comparison, a percent sign or a decimal point counts as a word, so
+a quote cannot change what a number says. Grounding proves where a passage came
+from, not that it is the best passage: two words still ground a reading, and each
+validator re-derives the verdict from its own reading.
 
 **Fabricated or spliced support**, **malformed model output**, **replay** (one case
 per tester per challenge, enforced on `challenge_id + tester`), **expired
@@ -77,9 +115,11 @@ in code; `tests/direct/test_ds_adversarial.py` works through them one at a time.
 - Cases use **synthetic references**. No raw personal financial record is required
   or wanted on chain; evidence is referenced by URL and sha256, and the
   demonstration data is synthetic and marked so in every document.
-- Every free-text field - and every label and challenge text field - passes a
-  **privacy guard** that refuses an email address or a run of nine or more digits
-  (dashes allowed, so a phone number in the usual form is caught). It is a
+- Every free-text field - and every label, challenge text field and prohibited
+  factor - passes a **privacy guard** that refuses an email address or a run of
+  nine or more digits (dashes allowed, so a phone number in the usual form is
+  caught). An evidence URL may not carry an email address, and a model's note
+  that carries an identifier is dropped rather than stored. It is a
   heuristic that catches the obvious mistakes, not a privacy guarantee: a spaced
   card number, a name or an address would pass it. The rule it enforces is that
   only synthetic or redacted data goes on chain.
@@ -101,5 +141,9 @@ lawful decision does not get a compliance stamp.
   across many decisions.
 - The readings are model judgements; where honest models split, nothing is stored.
 - Public-source evidence is only as strong as the hosts a challenge names.
-- One contest per case, for whichever party uses it first.
+- One contest per case, for whichever party uses it first; an unavailable
+  contest round does not spend it.
+- A host that stays down through the whole resolve window ends the case as
+  `EVIDENCE_UNAVAILABLE`; the tester can file again only while the challenge is
+  open.
 - Identity is a wallet; the per-wallet cap bounds abuse, it does not prevent it.

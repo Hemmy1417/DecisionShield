@@ -98,16 +98,27 @@ The brief's policy hash is the policy document's sha256, `policy_sha256`. The
 challenge's own canonical JSON is hashed again (`definition_hash`), and a
 submission commits to both and to the policy version.
 
+How the brief's suggested fields map: `deadline` is `submission_deadline`;
+`status` is stored beside the definition, not inside it, so the hash never
+changes; the brief's evidence URLs and evidence digest are the `evidence_json` items,
+each with its own `sha256`, plus `evidence_commitment`, the sha256 of the whole
+numbered list; `submitted_at` is the transaction time of the filing.
+
 ## The submission
 
-`submit_case(challenge_id, definition_hash, policy_version, policy_sha256,
+`submit_case(challenge_id, challenge_hash, policy_version, policy_sha256,
 subject_reference, input_summary, ai_decision, decision_explanation,
 claimed_violation, evidence_json)` - with `evidence_json` 1-5 items
-`{url, kind (PINNED|LIVE), role, sha256, label}`. The free-text fields are
-screened: no text addressed to the adjudicator, no hidden characters, and no
-email address or run of nine or more digits (account, card or identity numbers).
-That guard is a heuristic, documented as such; the rule it enforces is that the
-demonstration uses synthetic references.
+`{url, kind (PINNED|LIVE), role, sha256, label}`, no two of them declaring the
+same bytes, and no URL carrying an email address. The free-text fields, the
+labels, the challenge's text fields and its prohibited factors are screened: no
+text addressed to the adjudicator (read in the same decoded form as evidence),
+no hidden characters, and no email address or run of nine or more digits
+(account, card or identity numbers). That guard is a heuristic, documented as
+such; the rule it enforces is that the demonstration uses synthetic references.
+
+A tester files one case per challenge. They may file again only once that case
+ended without a reading: withdrawn, lapsed, or final as `EVIDENCE_UNAVAILABLE`.
 
 ## State machine
 
@@ -116,10 +127,22 @@ publish_challenge ─► OPEN ─(deadline)─► CLOSED
        └─ cancel (publisher, before any submission) ─► CANCELLED
 
 submit_case ─► PENDING ─resolve─► RESOLVED ─(contest window)─► finalize ─► FINAL
-                 │  │                 └─ contest (tester or publisher, once)
-                 │  └─ withdraw (tester) ─► CANCELLED
-                 └─ lapse (anyone, after the resolve window) ─► CANCELLED
+              │ ▲  │ │               └─ contest (tester or publisher, once)
+              │ └──┘ │
+              │  resolve with evidence unavailable: recorded, stays PENDING
+              │      └─ withdraw (tester) ─► CANCELLED
+              └─ lapse (anyone, after the resolve window)
+                   ├─ never read          ─► CANCELLED / LAPSED
+                   └─ evidence unavailable ─► FINAL / EVIDENCE_UNAVAILABLE
 ```
+
+Unavailable evidence never ends a case early. A resolve round whose evidence
+cannot be read is recorded and the case stays `PENDING`, so anyone may resolve it
+again while its window is open; only when the window passes does the outage
+become final. A contest round whose evidence cannot be read is recorded with
+`applied: false`: the standing verdict stays, and the contest is not spent. A
+party who can take a host down - the publisher's own policy page, say - cannot
+use the outage to replace a reading or to end a case.
 
 ## The panel's subjects
 
@@ -153,15 +176,20 @@ rests on it - so it quotes.
 5. (1-4 skip the panel.) The panel's answer is unusable -> `INCONCLUSIVE / PANEL_UNUSABLE`
 6. the items contradict each other -> `INCONCLUSIVE / EVIDENCE_CONTRADICTORY`
 7. the model output does not record the decision claimed -> `INCONCLUSIVE / DECISION_NOT_RECORDED`; unclear -> `DECISION_UNCLEAR`
-8. the violation condition is met -> `POLICY_VIOLATION_CONFIRMED / VIOLATION_CONDITION_MET` - if every passage it rests on is bound to its bytes, else `INCONCLUSIVE / BYTES_NOT_BOUND`
+8. the violation condition is met -> `POLICY_VIOLATION_CONFIRMED / VIOLATION_CONDITION_MET` - if the case is bound to its bytes, else `INCONCLUSIVE / BYTES_NOT_BOUND`
 9. the violation condition is unclear -> `INCONCLUSIVE / VIOLATION_UNCLEAR`
 10. not met, but the rule was broken, a prohibited factor used, or the explanation contradicted -> `INCONCLUSIVE / CRITERIA_CONFLICT`
 11. not met, and a criterion unclear -> `INCONCLUSIVE / CRITERIA_UNCLEAR`
-12. not met, the rule followed, nothing prohibited used, the explanation supported -> `POLICY_COMPLIANT / RULE_FOLLOWED` - if bound to its bytes, else `INCONCLUSIVE / BYTES_NOT_BOUND`
+12. not met, the rule followed, nothing prohibited used, the explanation supported -> `POLICY_COMPLIANT / RULE_FOLLOWED` - if the case is bound to its bytes, else `INCONCLUSIVE / BYTES_NOT_BOUND`
 
 Both positive outcomes need bound bytes: a confirmed violation and a compliance
-finding are each something a consumer acts on. A failed fetch is never a
-violation and never compliance.
+finding are each something a consumer acts on. **A case is bound when every
+readable item that can be evidence - the policy, the inputs, the output, any
+corroboration - is pinned to a sha256.** Only the explanation, which is never
+evidence, may be `LIVE`. This is decided from the case, not from the passages a
+reading happens to quote: a verdict cannot rest on unbound facts it did not
+cite, and two honest validators quoting different passages cannot disagree
+about it. A failed fetch is never a violation and never compliance.
 
 The **severity** of a confirmed violation is the challenge's declared severity.
 The model never grades it.
@@ -175,6 +203,13 @@ title and content type. Consequence: `verdict`, `reason_code`, the recorded
 prohibited factor detected, explanation supported - each true, false or null),
 the statuses and the digests.
 
+What a consumer is served follows what was compared. A positive verdict
+compares every criterion, so every criterion is served. Any other outcome
+compares only its verdict and reason, which fix the readings up to the one the
+derivation stopped at; every other criterion is served as `null`, never as a
+leader's unchecked claim. The full readings stay in the resolution record, each
+with its `compared` flag.
+
 ## Why non-payable
 
 The brief's default, and the right one: a verdict is a signal; model-risk and
@@ -187,6 +222,31 @@ governance systems act on it with their own processes.
 | a fintech's model-risk or compliance team | the full resolution: the criteria, the quoted passages, the policy hash it was judged under |
 | an AI model-monitoring system | `is_policy_violation_confirmed(submission_id)`: one boolean plus finality |
 | risk, insurance or infrastructure systems | `get_verdict`: verdict, severity, criteria, the policy version and hash |
+
+## What the adversarial review changed
+
+A fresh reader audited the contract after the first run of record, read-only,
+and proved each finding with a throwaway test. Every one was a real defect, and
+each fix has its own test and its own mutation:
+
+| Finding | Fix |
+|---|---|
+| the operator under test could bury a case: take its policy host down, resolve, spend the one contest during the outage, and finalize | unavailable evidence leaves the case `PENDING`; an unavailable contest round is not applied and does not spend the contest; a case that ends without a reading may be filed again |
+| a positive verdict could rest on a `LIVE` input as long as the readings quoted only the always-pinned policy | binding is a property of the case (above) |
+| whether a case counted as bound depended on which passage each validator's model quoted, splitting honest validators | the same |
+| free text skipped the decoded scan form, so a soft hyphen inside a marker passed | free text is scanned in the same form as evidence |
+| fullwidth letters, Cyrillic and Greek lookalikes, JSON escapes and named entities slipped past the evidence scan | all are folded or decoded before the scan; a few direct phrasings were added to the list |
+| an inconclusive verdict served criteria no validator compared | uncompared criteria are served as `null` |
+| grounding ignored punctuation, so a stored quote could add a minus sign or a comparison to a number | signs, comparisons and decimal points are part of the words a quote must match |
+| prohibited factors and evidence URLs skipped the privacy guard; two items could declare the same bytes; a domain could carry a path; a model's note was stored unscreened | each is refused or dropped |
+
+Two things were looked at and kept. A confirmed violation still compares every
+criterion, not only the ones its verdict rests on: the criteria are what a
+consumer reads, so they carry consensus, at the price of a validator who reads
+the explanation differently refusing the round. And the marker list stays
+narrow; text in the panel's own answer format inside evidence is not caught by
+it, which is one reason the prompt frames every document as data and every
+validator reads for itself.
 
 ## Deliberately left out
 

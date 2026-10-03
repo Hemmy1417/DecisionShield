@@ -1,4 +1,4 @@
-# v0.1.0
+# v0.2.0
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
 # NOTE: the blank line above is load-bearing. GenVM reads the leading
@@ -53,9 +53,9 @@ from dataclasses import dataclass
 
 # == constants (surfaced by get_config) =======================================
 
-CONTRACT_VERSION = "0.1.0"
+CONTRACT_VERSION = "0.2.0"
 SCHEMA_VERSION = 1
-VERDICT_VERSION = 1
+VERDICT_VERSION = 2
 
 NAME_CAP = 120
 IDENTIFIER_CAP = 80
@@ -262,7 +262,25 @@ EVALUATOR_MARKERS = (
     "instructions for validators", "decisionshield panel", "decisionshield validators",
     "set the verdict to", "return policy_compliant", "return policy_violation",
     "mark this case as compliant", "mark this case as a violation",
-    "to any ai adjudicating", "ai adjudicator:")
+    "to any ai adjudicating", "ai adjudicator:", "the correct outcome is",
+    "the correct outcome here is",
+    "the correct verdict is", "policy_compliant", "policy_violation_confirmed")
+# letters from other scripts that a reader cannot tell from Latin ones, folded to
+# Latin for the marker scan only (Cyrillic and Greek lookalikes)
+CONFUSABLES = {
+    "\u0430": "a", "\u0435": "e", "\u043e": "o", "\u0440": "p", "\u0441": "c",
+    "\u0443": "y", "\u0445": "x", "\u0456": "i", "\u0458": "j", "\u0455": "s",
+    "\u0501": "d", "\u04cf": "l", "\u0410": "a", "\u0412": "b", "\u0415": "e",
+    "\u041a": "k", "\u041c": "m", "\u041d": "h", "\u041e": "o", "\u0420": "p",
+    "\u0421": "c", "\u0422": "t", "\u0425": "x", "\u0406": "i", "\u0408": "j",
+    "\u0405": "s", "\u03bf": "o", "\u03b1": "a", "\u03b5": "e", "\u03b9": "i",
+    "\u03ba": "k", "\u03bd": "v", "\u03c1": "p", "\u03c4": "t", "\u03c5": "u",
+    "\u0391": "a", "\u0392": "b", "\u0395": "e", "\u0397": "h", "\u0399": "i",
+    "\u039a": "k", "\u039c": "m", "\u039d": "n", "\u039f": "o", "\u03a1": "p",
+    "\u03a4": "t", "\u03a5": "y", "\u03a7": "x"}
+# named entities that hide or split a word, decoded for the marker scan
+SCAN_ENTITIES = (("&shy;", ""), ("&zwj;", ""), ("&zwnj;", ""), ("&zerowidthspace;", ""),
+                 ("&nobreak;", ""), ("&lrm;", ""), ("&rlm;", ""), ("&nbsp;", " "))
 # characters that hide or reorder text for a human reader while a parser sees it;
 # the zero-width joiner is left out because emoji sequences use it
 HIDDEN_CHARACTERS = ("\u200b", "\u200c", "\u200e", "\u200f", "\u202a", "\u202b", "\u202c",
@@ -482,7 +500,7 @@ def _text_error(value, cap: int, label: str, allow_newlines: bool, required: boo
             continue
         if code < 32 or code == 127:
             return label + " contains control characters"
-    if _evaluator_hits(value) or _hidden_hits(value):
+    if _evaluator_hits(_scan_form(value)) or _hidden_hits(value):
         return label + " must not contain instructions to the evaluator or hidden text"
     return ""
 
@@ -495,7 +513,11 @@ def _clean_note(value) -> str:
     chars = []
     for ch in value:
         chars.append(" " if (ord(ch) < 32 or ord(ch) == 127) else ch)
-    return " ".join("".join(chars).split())[:NOTE_CAP].strip()
+    note = " ".join("".join(chars).split())[:NOTE_CAP].strip()
+    if note != "" and (_evaluator_hits(_scan_form(note)) or _hidden_hits(note)
+                       or _privacy_error(note, "note") != ""):
+        return ""
+    return note
 
 # == security: URL admission =======================================================
 
@@ -608,6 +630,9 @@ def _valid_ident(text) -> bool:
 def _valid_domain(text) -> bool:
     if not isinstance(text, str) or text == "" or len(text) > 100 or text != text.lower():
         return False
+    for ch in text:
+        if not (("a" <= ch <= "z") or ("0" <= ch <= "9") or ch in ".-"):
+            return False
     err, _canon = _url_parts("https://" + text + "/")
     return err == ""
 
@@ -659,7 +684,8 @@ def _factors_error(values) -> str:
         return "prohibited_factors must be a list of 0 to " + str(MAX_FACTORS) + " factors"
     seen = []
     for index, factor in enumerate(values):
-        err = _text_error(factor, FACTOR_CAP, "prohibited_factors[" + str(index) + "]", False)
+        err = _free_text_error(factor, FACTOR_CAP, "prohibited_factors[" + str(index) + "]",
+                               False)
         if err != "":
             return err
         key = _norm_ws(factor)
@@ -738,6 +764,7 @@ def _evidence_error(values, spec: dict) -> str:
     if not isinstance(values, list) or len(values) < 1 or len(values) > MAX_EVIDENCE:
         return "evidence_json must be a JSON list of 1 to " + str(MAX_EVIDENCE) + " items"
     urls = [spec["policy_url"]]
+    digests = [spec["policy_sha256"]]
     for index, entry in enumerate(values):
         where = "evidence[" + str(index) + "]"
         if not isinstance(entry, dict) or tuple(sorted(entry.keys())) != DECLARED_KEYS:
@@ -763,6 +790,12 @@ def _evidence_error(values, spec: dict) -> str:
             return where + " host is outside the challenge's evidence domains"
         if canonical_url in urls:
             return where + " repeats an evidence URL, or is the policy itself"
+        if re.search("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+[.][A-Za-z]{2,}", canonical_url):
+            return where + " url must not contain an email address: use a synthetic reference"
+        if entry["kind"] == KIND_PINNED:
+            if entry["sha256"] in digests:
+                return where + " declares the same bytes as another item, or as the policy"
+            digests.append(entry["sha256"])
         urls.append(canonical_url)
         entry["url"] = canonical_url
     for role in spec["required_evidence"]:
@@ -785,16 +818,33 @@ def _numbered(spec: dict, values: list) -> list:
 
 # == grounding a quote in the text a node retrieved ====================================
 
+SIGNIFICANT = "<>=+%$"
+
+
 def _word_tokens(text: str) -> list:
-    """Lowercase alphanumeric words, in order; everything else separates."""
+    """Lowercase alphanumeric words, in order. A decimal point between digits
+    stays inside its number; a comparison or percent sign, and a minus sign
+    standing before a digit, are tokens of their own - a quote may not add,
+    drop or invert them. Everything else separates."""
+    folded = text.casefold()
+    n = len(folded)
     words = []
     current = []
-    for ch in text.casefold():
+    for i in range(n):
+        ch = folded[i]
+        nxt = folded[i + 1] if i + 1 < n else ""
+        prev = folded[i - 1] if i > 0 else ""
         if ch.isalnum():
             current.append(ch)
-        elif current:
+            continue
+        if ch == "." and current and prev.isdigit() and nxt.isdigit():
+            current.append(ch)
+            continue
+        if current:
             words.append("".join(current))
             current = []
+        if ch in SIGNIFICANT or (ch == "-" and nxt.isdigit() and not prev.isalnum()):
+            words.append(ch)
     if current:
         words.append("".join(current))
     return words
@@ -821,7 +871,7 @@ def _grounds_in_order(haystack: list, text: str) -> bool:
         words = _word_tokens(part)
         if len(words) == 0:
             continue
-        if len(words) == 1:
+        if len([w for w in words if w not in SIGNIFICANT and w != "-"]) < 2:
             return False
         end = _find_run(haystack, words, position)
         if end < 0:
@@ -1047,13 +1097,50 @@ def _decode_numeric(text: str) -> str:
     return re.sub("&#([xX]?)([0-9a-fA-F]{1,7});", one, text)
 
 
+def _ascii_lower(text: str) -> str:
+    """Lowercase ASCII letters only, so every index still lines up with the text."""
+    return "".join(chr(ord(ch) + 32) if "A" <= ch <= "Z" else ch for ch in text)
+
+
+def _decode_json_escapes(text: str) -> str:
+    """\\uXXXX escapes, decoded for the marker scan: a JSON item reaches the panel
+    as written, escapes and all."""
+    def one(found):
+        return chr(int(found.group(1), 16))
+    return re.sub("\\\\u([0-9a-fA-F]{4})", one, text)
+
+
 def _scan_form(text: str) -> str:
-    """The form the marker scan reads: numeric entities decoded and every
-    character that can split a word invisibly removed - hidden characters, the
-    soft hyphen and the zero-width joiner."""
-    text = _decode_numeric(text)
-    return "".join(ch for ch in text if ch not in HIDDEN_CHARACTERS
-                   and ch not in (chr(0xFEFF), chr(0xAD), chr(0x200D)))
+    """The form the marker scan reads: numeric and word-splitting named entities
+    and JSON escapes decoded; every character that can split a word invisibly
+    removed - hidden characters, the soft hyphen and the zero-width joiner;
+    fullwidth forms and Cyrillic or Greek lookalikes folded to Latin."""
+    text = _decode_json_escapes(_decode_numeric(text))
+    lowered = _ascii_lower(text)
+    for entity, char in SCAN_ENTITIES:
+        if entity in lowered:
+            out = []
+            i = 0
+            while i < len(text):
+                if lowered.startswith(entity, i):
+                    out.append(char)
+                    i = i + len(entity)
+                else:
+                    out.append(text[i])
+                    i = i + 1
+            text = "".join(out)
+            lowered = _ascii_lower(text)
+    chars = []
+    for ch in text:
+        if ch in HIDDEN_CHARACTERS or ch in (chr(0xFEFF), chr(0xAD), chr(0x200D)):
+            continue
+        code = ord(ch)
+        if 0xFF01 <= code <= 0xFF5E:
+            ch = chr(code - 0xFEE0)
+        elif code == 0x3000:
+            ch = " "
+        chars.append(CONFUSABLES.get(ch, ch))
+    return "".join(chars)
 
 
 def _normalize(text: str, html: bool) -> str:
@@ -1546,14 +1633,20 @@ def _criteria(ctx: dict, payload: dict) -> dict:
             "explanation_supported": value(SUBJECT_EXPLANATION)}
 
 
-def _bound(ctx: dict, payload: dict, subjects: list) -> bool:
-    """Whether every passage these readings quote comes from bytes the
-    submitter, or the challenge, bound to a sha256."""
-    for subject_id in subjects:
-        for evidence_id in _cited(payload, subject_id):
-            item = _item_of(ctx, evidence_id)
-            if item is None or item["kind"] != KIND_PINNED:
-                return False
+def _bound(ctx: dict, payload: dict) -> bool:
+    """Whether the case rests on bound bytes: every readable item that can be
+    evidence - the policy, the inputs, the output, any corroboration - was
+    pinned to a sha256. Only the explanation, which is never evidence, may be
+    LIVE. Deciding this from the case rather than from the passages a reading
+    quotes means a positive verdict cannot rest on unbound facts the reading
+    did not cite, and two honest nodes quoting different passages cannot
+    disagree about it."""
+    for s in payload["sources"]:
+        item = _item_of(ctx, s["evidence_id"])
+        if item is None or s["status"] not in READABLE or item["role"] == ROLE_EXPLANATION:
+            continue
+        if item["kind"] != KIND_PINNED:
+            return False
     return True
 
 
@@ -1582,7 +1675,7 @@ def _verdict_for(ctx: dict, payload: dict) -> tuple:
         return (INCONCLUSIVE, "DECISION_UNCLEAR")
     violation = _state_of(payload, SUBJECT_VIOLATION)
     if violation == MET:
-        if not _bound(ctx, payload, [SUBJECT_DECISION, SUBJECT_VIOLATION]):
+        if not _bound(ctx, payload):
             return (INCONCLUSIVE, "BYTES_NOT_BOUND")
         return (VIOLATION_CONFIRMED, "VIOLATION_CONDITION_MET")
     if violation == UNCLEAR:
@@ -1595,7 +1688,7 @@ def _verdict_for(ctx: dict, payload: dict) -> tuple:
         return (INCONCLUSIVE, "CRITERIA_CONFLICT")
     if UNCLEAR in (rule, factor, explanation):
         return (INCONCLUSIVE, "CRITERIA_UNCLEAR")
-    if not _bound(ctx, payload, [SUBJECT_DECISION, SUBJECT_RULE]):
+    if not _bound(ctx, payload):
         return (INCONCLUSIVE, "BYTES_NOT_BOUND")
     return (COMPLIANT, "RULE_FOLLOWED")
 
@@ -1635,10 +1728,41 @@ def _digests(ctx: dict, payload: dict) -> dict:
     return out
 
 
+CRITERION_SUBJECTS = (("decision_recorded", SUBJECT_DECISION),
+                      ("violation_condition_met", SUBJECT_VIOLATION),
+                      ("rule_followed", SUBJECT_RULE),
+                      ("prohibited_factor_detected", SUBJECT_FACTOR),
+                      ("explanation_supported", SUBJECT_EXPLANATION))
+# for an outcome that is not positive, the readings its reason fixes: the one the
+# derivation stopped at and the ones it had to get past to reach it
+STOP_ORDER = (SUBJECT_CONSISTENCY, SUBJECT_DECISION, SUBJECT_VIOLATION)
+STOPS = {"EVIDENCE_CONTRADICTORY": 0, "CONSISTENCY_UNCLEAR": 0,
+         "DECISION_NOT_RECORDED": 1, "DECISION_UNCLEAR": 1, "BYTES_NOT_BOUND": 1,
+         "VIOLATION_UNCLEAR": 2, "CRITERIA_CONFLICT": 2, "CRITERIA_UNCLEAR": 2}
+
+
+def _fixed_by_comparison(verdict: str, reason: str, subject_id: str) -> bool:
+    """Whether a reading's value was fixed by what the validators compared. A
+    positive verdict compares every criterion; otherwise the reason fixes the
+    readings up to the one it stopped at."""
+    if verdict in POSITIVE_VERDICTS:
+        return True
+    stop = STOPS.get(reason)
+    return stop is not None and subject_id in STOP_ORDER[:stop + 1]
+
+
+def _served(criteria: dict, verdict: str, reason: str) -> dict:
+    """The criteria a consumer is served: a value nobody compared is null, never
+    a leader's unchecked claim."""
+    return {key: (criteria[key] if _fixed_by_comparison(verdict, reason, subject_id)
+                  else None)
+            for key, subject_id in CRITERION_SUBJECTS}
+
+
 def _derive(ctx: dict, payload: dict) -> dict:
     """The verdict, and the part every validator must agree on."""
     verdict, reason = _verdict_for(ctx, payload)
-    criteria = _criteria(ctx, payload)
+    criteria = _served(_criteria(ctx, payload), verdict, reason)
     # a positive verdict is what consumers act on, so its whole criteria object
     # is compared; for an inconclusive outcome the reason names the reading it
     # stopped at, and readings no rule reached are recorded, never compared.
@@ -1766,6 +1890,7 @@ class Submission:
     severity: str
     evidence_status: str
     criteria: str                 # canonical JSON of the criteria object
+    verdict_resolution: str       # the round the standing verdict comes from
     resolution_ids: DynArray[str]
 
 
@@ -1854,6 +1979,13 @@ class DecisionShield(gl.Contract):
         value = self._counter_value(wallet) + delta
         self.open_counts[wallet] = u32(value if value > 0 else 0)
 
+    def _refilable(self, submission: Submission) -> bool:
+        """A tester may file again only once the earlier case ended without a
+        reading: withdrawn, lapsed, or final with its evidence unavailable."""
+        return str(submission.status) == SUB_CANCELLED \
+            or (str(submission.status) == SUB_FINAL
+                and str(submission.verdict) == EVIDENCE_UNAVAILABLE)
+
     def _latest(self, ids) -> str:
         return "" if len(ids) == 0 else str(ids[len(ids) - 1])
 
@@ -1902,20 +2034,11 @@ class DecisionShield(gl.Contract):
 
     def _compared(self, ctx: dict, outcome: dict, finding: dict) -> bool:
         """Whether this reading's stored state is fixed by what the validators
-        compared. A positive verdict compares every criterion, so every reading is
-        fixed; otherwise the reason fixes the reading it stopped at and the ones
-        the derivation had to get past to reach it."""
+        compared."""
         if finding["by"] != BY_PANEL:
             return False
-        if outcome["verdict"] in POSITIVE_VERDICTS:
-            return True
-        order = [SUBJECT_CONSISTENCY, SUBJECT_DECISION, SUBJECT_VIOLATION]
-        stops = {"EVIDENCE_CONTRADICTORY": 0, "CONSISTENCY_UNCLEAR": 0,
-                 "DECISION_NOT_RECORDED": 1, "DECISION_UNCLEAR": 1,
-                 "BYTES_NOT_BOUND": 1, "VIOLATION_UNCLEAR": 2,
-                 "CRITERIA_CONFLICT": 2, "CRITERIA_UNCLEAR": 2}
-        stop = stops.get(outcome["reason_code"])
-        return stop is not None and finding["id"] in order[:stop + 1]
+        return _fixed_by_comparison(outcome["verdict"], outcome["reason_code"],
+                                    finding["id"])
 
     def _source_records(self, ctx: dict, payload: dict) -> list:
         records = []
@@ -1939,7 +2062,7 @@ class DecisionShield(gl.Contract):
         return records
 
     def _record(self, submission: Submission, ctx: dict, payload: dict, outcome: dict,
-                supersedes: str) -> dict:
+                supersedes: str, applied: bool) -> dict:
         findings = []
         for finding in payload["findings"]:
             entry = dict(finding)
@@ -1953,7 +2076,7 @@ class DecisionShield(gl.Contract):
             "policy_version": ctx["challenge"]["policy_version"],
             "policy_sha256": ctx["challenge"]["policy_sha256"],
             "commitment": ctx["commitment"], "mode": ctx["mode"], "round": ctx["round"],
-            "at": ctx["now"], "supersedes": supersedes,
+            "at": ctx["now"], "supersedes": supersedes, "applied": applied,
             "verdict": outcome["verdict"], "reason_code": outcome["reason_code"],
             "severity": outcome["severity"],
             "policy_compliant": True if outcome["verdict"] == COMPLIANT else
@@ -1987,15 +2110,22 @@ class DecisionShield(gl.Contract):
             self.violation_counter = u32(int(self.violation_counter) - 1)
 
     def _adjudicate(self, submission: Submission, challenge: Challenge, mode: str,
-                    now: str) -> str:
+                    now: str) -> tuple:
+        """One round, always recorded. Unavailable evidence in a contest leaves
+        the standing verdict in place: a party who can take a host down must not
+        be able to replace a reading with an outage. Returns (resolution_id,
+        outcome)."""
         ctx = self._ctx(submission, challenge, mode, now)
-        supersedes = self._latest(submission.resolution_ids)
+        supersedes = str(submission.verdict_resolution)
         payload = self._run_round(ctx)
         outcome = _derive(ctx, payload)
-        record = self._record(submission, ctx, payload, outcome, supersedes)
+        applied = not (mode == MODE_CONTEST and outcome["verdict"] == EVIDENCE_UNAVAILABLE)
+        record = self._record(submission, ctx, payload, outcome, supersedes, applied)
         resolution_id = self._store(submission, record)
-        self._apply(submission, outcome, now)
-        return resolution_id
+        if applied:
+            self._apply(submission, outcome, now)
+            submission.verdict_resolution = resolution_id
+        return (resolution_id, outcome)
 
     # -- writes: the challenge ---------------------------------------------------
 
@@ -2082,7 +2212,7 @@ class DecisionShield(gl.Contract):
         wallet = self._sender_hex()
         key = challenge_id + "|" + wallet
         held = self.filed.get(key)
-        if held is not None:
+        if held is not None and not self._refilable(self.submissions[str(held)]):
             self._fail("this account already filed " + str(held) + " against this"
                        " challenge")
         if self._counter_value(wallet) >= MAX_OPEN_PER_WALLET:
@@ -2108,7 +2238,7 @@ class DecisionShield(gl.Contract):
             status=SUB_PENDING, submitted_at=now, resolved_at="", finalized_at="",
             window_ends=_epoch_iso(_iso_epoch(now) + spec["resolve_window"]),
             contested=False, verdict=PENDING, reason_code="", severity="",
-            evidence_status="", criteria="{}", resolution_ids=[])
+            evidence_status="", criteria="{}", verdict_resolution="", resolution_ids=[])
         challenge.submission_ids.append(submission_id)
         self.submission_ids.append(submission_id)
         self.filed[key] = submission_id
@@ -2141,10 +2271,14 @@ class DecisionShield(gl.Contract):
         if _iso_epoch(now) > _iso_epoch(str(submission.window_ends)):
             self._fail("the resolve window closed at " + str(submission.window_ends))
         challenge = self._challenge(str(submission.challenge_id))
-        resolution_id = self._adjudicate(submission, challenge, MODE_RESOLVE, now)
-        submission.status = SUB_RESOLVED
-        submission.window_ends = _epoch_iso(
-            _iso_epoch(now) + self._spec(challenge)["contest_window"])
+        resolution_id, outcome = self._adjudicate(submission, challenge, MODE_RESOLVE, now)
+        # unavailable evidence is recorded and the case stays PENDING: anyone may
+        # resolve it again while its window is open, so an outage - or a host
+        # taken down on purpose - cannot end the case
+        if outcome["verdict"] != EVIDENCE_UNAVAILABLE:
+            submission.status = SUB_RESOLVED
+            submission.window_ends = _epoch_iso(
+                _iso_epoch(now) + self._spec(challenge)["contest_window"])
         return resolution_id
 
     @gl.public.write
@@ -2164,8 +2298,11 @@ class DecisionShield(gl.Contract):
         now = self._now()
         if _iso_epoch(now) > _iso_epoch(str(submission.window_ends)):
             self._fail("the contest window closed at " + str(submission.window_ends))
-        resolution_id = self._adjudicate(submission, challenge, MODE_CONTEST, now)
-        submission.contested = True
+        resolution_id, outcome = self._adjudicate(submission, challenge, MODE_CONTEST, now)
+        # a contest whose evidence was unavailable is recorded but spends nothing:
+        # the standing verdict stays and the contest can be tried again in the window
+        if outcome["verdict"] != EVIDENCE_UNAVAILABLE:
+            submission.contested = True
         return resolution_id
 
     @gl.public.write
@@ -2185,19 +2322,24 @@ class DecisionShield(gl.Contract):
 
     @gl.public.write
     def lapse_case(self, submission_id: str) -> str:
-        """A case nobody resolved while its window was open lapses. Anyone may
-        call it."""
+        """A case whose resolve window passed without a reading. One nobody
+        resolved is CANCELLED; one whose evidence stayed unavailable through
+        every round becomes FINAL as EVIDENCE_UNAVAILABLE, so the outage stays on
+        the record. Either way the tester may file again. Anyone may call it."""
         submission = self._submission(submission_id)
         if str(submission.status) != SUB_PENDING:
             self._fail("only a PENDING case lapses")
         now = self._now()
         if _iso_epoch(now) <= _iso_epoch(str(submission.window_ends)):
             self._fail("the resolve window closes at " + str(submission.window_ends))
+        submission.finalized_at = now
+        self._count(str(submission.tester), -1)
+        if str(submission.verdict) == EVIDENCE_UNAVAILABLE:
+            submission.status = SUB_FINAL
+            return SUB_FINAL
         submission.status = SUB_CANCELLED
         submission.verdict = CANCELLED
         submission.reason_code = "LAPSED"
-        submission.finalized_at = now
-        self._count(str(submission.tester), -1)
         return CANCELLED
 
     # -- views: the challenge ----------------------------------------------------
@@ -2294,6 +2436,7 @@ class DecisionShield(gl.Contract):
             "contested": bool(submission.contested),
             "resolution_count": len(submission.resolution_ids),
             "latest_resolution": self._latest(submission.resolution_ids),
+            "verdict_resolution": str(submission.verdict_resolution),
         }
 
     @gl.public.view
@@ -2320,7 +2463,7 @@ class DecisionShield(gl.Contract):
             "criteria": json.loads(str(submission.criteria)),
             "final": str(submission.status) == SUB_FINAL,
             "resolved_at": str(submission.resolved_at),
-            "resolution_id": self._latest(submission.resolution_ids),
+            "resolution_id": str(submission.verdict_resolution),
             "rounds": len(submission.resolution_ids),
         }
 
@@ -2342,7 +2485,7 @@ class DecisionShield(gl.Contract):
         submission = self._submission_or_none(submission_id)
         if submission is None:
             return {"found": False, "submission_id": submission_id}
-        latest = self._latest(submission.resolution_ids)
+        latest = str(submission.verdict_resolution)
         record = json.loads(str(self.resolutions.get(latest))) if latest != "" else None
         items = self._items(submission)
         return {
@@ -2382,7 +2525,7 @@ class DecisionShield(gl.Contract):
             rounds.append({"resolution_id": record["resolution_id"], "mode": record["mode"],
                            "round": record["round"], "at": record["at"],
                            "verdict": record["verdict"], "reason_code": record["reason_code"],
-                           "severity": record["severity"]})
+                           "severity": record["severity"], "applied": record["applied"]})
         return {"found": True, "submission_id": str(submission.submission_id),
                 "rounds": rounds}
 
@@ -2397,7 +2540,8 @@ class DecisionShield(gl.Contract):
         window_open = at <= _iso_epoch(str(submission.window_ends))
         effective = status
         if status == SUB_PENDING and not window_open:
-            effective = SUB_CANCELLED
+            effective = SUB_FINAL if str(submission.verdict) == EVIDENCE_UNAVAILABLE \
+                else SUB_CANCELLED
         return {
             "found": True, "submission_id": str(submission.submission_id),
             "status": status, "effective_status": effective,

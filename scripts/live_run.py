@@ -300,6 +300,12 @@ def file_case(chain: Chain, case: dict, hosts: dict) -> str:
     return entry["submission_id"]
 
 
+# the case whose evidence stays unreadable: it must stay PENDING after its
+# unavailable round, become FINAL as EVIDENCE_UNAVAILABLE when its window passes,
+# and leave its tester free to file again
+OUTAGE_CASE = "DS09"
+
+
 def phase_cases(chain: Chain, cases: dict, hosts: dict):
     # the case that must lapse is filed first, so its window has passed by the time
     # the others are resolved
@@ -353,6 +359,10 @@ def record(chain: Chain, step: str, label: str, sid: str, case: dict,
         if round_two:
             held = resolution["round"] == 2 and resolution["supersedes"] != ""
             entry["expected_verdict"] = "a second reading, superseding the first"
+        elif case["expect_verdict"] == "EVIDENCE_UNAVAILABLE":
+            # unavailable evidence never ends a case: it stays open to be read
+            entry["status_after"] = chain.read("get_submission", [sid])["status"]
+            held = held and entry["status_after"] == "PENDING"
         entry["held"] = held
         entry["note"] = case["note"]
     else:
@@ -373,7 +383,7 @@ def wait_until(iso: str, what: str):
         time.sleep(min(left + 5, 120))
 
 
-def phase_settle(chain: Chain, cases: dict):
+def phase_settle(chain: Chain, cases: dict, hosts: dict):
     """Finalise the verdicts a consumer should see, read them back through the
     monitor's view, and lapse the case nobody resolved."""
     for case in cases["cases"]:
@@ -417,6 +427,48 @@ def phase_settle(chain: Chain, cases: dict):
             entry["held"] = after["verdict"] == case["expect_verdict"] \
                 and after["reason_code"] == case["expect_reason"]
             chain.transcript.put(step, entry)
+
+    outage = {c["case"]: c for c in cases["cases"]}.get(OUTAGE_CASE)
+    if outage is not None and chain.transcript.has("file:" + OUTAGE_CASE):
+        sid = chain.transcript.get("file:" + OUTAGE_CASE)["submission_id"]
+        step = "lapse:" + OUTAGE_CASE
+        state = chain.read("get_submission", [sid])
+        if state["status"] == "PENDING":
+            wait_until(state["window_ends"], "the resolve window of " + sid)
+            chain.send(step, "keeper", "lapse_case", [sid])
+        if chain.transcript.has(step):
+            entry = chain.transcript.get(step)
+            after = chain.read("get_verdict", [sid])
+            entry["observed_verdict"] = after["verdict"]
+            entry["observed_reason"] = after["reason_code"]
+            entry["expected_verdict"] = "EVIDENCE_UNAVAILABLE, final"
+            entry["held"] = after["verdict"] == "EVIDENCE_UNAVAILABLE" and after["final"]
+            entry["note"] = ("its evidence stayed unreadable through the resolve window: "
+                             "the outage is final on the record, never a verdict")
+            chain.transcript.put(step, entry)
+            log("    " + OUTAGE_CASE + " after its window: " + after["verdict"] + " final="
+                + str(after["final"]) + (" HELD" if entry["held"] else " MISSED"))
+        refile = "refile:" + OUTAGE_CASE
+        if chain.transcript.has(step) and not chain.transcript.has(refile):
+            cid = challenge_id(chain)
+            hashes = chain.read("get_policy_hash", [cid])
+            entry = chain.send(refile, outage["wallet"], "submit_case",
+                               [cid, hashes["definition_hash"], hashes["policy_version"],
+                                hashes["policy_sha256"], outage["subject_reference"],
+                                outage["input_summary"], outage["ai_decision"],
+                                outage["decision_explanation"], outage["claimed_violation"],
+                                evidence_json(outage, hosts)])
+            newest = chain.read("list_submissions", [cid, 0, 50])["ids"][-1]
+            mine = chain.read("get_submission", [newest])
+            entry["submission_id"] = newest
+            entry["expected_verdict"] = "a new case from the same tester"
+            entry["observed_verdict"] = mine["status"]
+            entry["held"] = entry.get("leader_execution") == "SUCCESS" and newest != sid \
+                and mine["tester"] == chain.address_of(outage["wallet"])
+            entry["note"] = "a tester whose case ended without a reading may file again"
+            chain.transcript.put(refile, entry)
+            log("    " + OUTAGE_CASE + " filed again as " + newest
+                + (" HELD" if entry["held"] else " MISSED"))
 
     chain.transcript.data["stats"] = chain.read("get_stats")
     chain.transcript.save()
@@ -508,7 +560,7 @@ def main():
         elif phase == "cases":
             phase_cases(chain, cases, hosts)
         elif phase == "settle":
-            phase_settle(chain, cases)
+            phase_settle(chain, cases, hosts)
         elif phase == "refusals":
             phase_refusals(chain, cases, hosts)
     log("summary " + json.dumps(transcript.summary()))
