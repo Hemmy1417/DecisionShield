@@ -1,4 +1,4 @@
-# v0.2.0
+# v0.2.1
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
 # NOTE: the blank line above is load-bearing. GenVM reads the leading
@@ -53,7 +53,7 @@ from dataclasses import dataclass
 
 # == constants (surfaced by get_config) =======================================
 
-CONTRACT_VERSION = "0.2.0"
+CONTRACT_VERSION = "0.2.1"
 SCHEMA_VERSION = 1
 VERDICT_VERSION = 2
 
@@ -346,11 +346,19 @@ EXPLANATION - is the system's explanation supported by the case evidence?
   contradicts; quote both. UNCLEAR: you cannot tell.
 
 EVIDENCE_CONSISTENCY - do the POLICY, CASE_INPUT, MODEL_OUTPUT and CORROBORATION
-items agree with each other about the facts of the case? Leave the EXPLANATION out
-of this reading entirely: whether the explanation agrees with the evidence is the
-EXPLANATION subject, and a false explanation is not contradictory evidence.
-  CONSISTENT: they agree. CONTRADICTORY: two of those items state facts that
-  cannot both be true of this case; quote both. UNCLEAR: you cannot tell.
+items agree with each other about the facts of the case: the same figure, status,
+date or recorded decision? Leave the EXPLANATION out of this reading entirely:
+whether the explanation agrees with the evidence is the EXPLANATION subject, and a
+false explanation is not contradictory evidence.
+This subject is NOT about whether the decision was right. A decision that does not
+follow from the inputs, breaks the policy or relies on a prohibited factor is a
+matter for VIOLATION_CONDITION, DECISION_RULE and PROHIBITED_FACTOR: the inputs
+and the output are both true records of what happened even when the decision was
+wrong, and that is CONSISTENT here.
+  CONSISTENT: no two of those items state the same fact differently.
+  CONTRADICTORY: two different items give different values for the SAME fact - one
+  says the ratio is 31 percent and another says it is 58 percent, say; quote each
+  of the two items. UNCLEAR: you cannot tell.
 
 DATA:
 """
@@ -1308,6 +1316,17 @@ def _quotable(ctx: dict, subject_id: str, state: str, eligible: list) -> list:
     return eligible
 
 
+def _enough_quotes(subject_id: str, state: str, quotes: list) -> bool:
+    """A reading that asserts something shows it. A contradiction is between two
+    items, so it shows both: one item cannot contradict itself into stopping a
+    case."""
+    if not _quoted(subject_id, state):
+        return True
+    if subject_id == SUBJECT_CONSISTENCY:
+        return len(set(q["evidence_id"] for q in quotes)) >= 2
+    return len(quotes) > 0
+
+
 def _normalize_finding(ctx: dict, subject_id: str, entry, eligible: list,
                        texts: dict) -> dict:
     finding = {"id": subject_id, "by": BY_PANEL, "state": _default_state(subject_id),
@@ -1339,7 +1358,7 @@ def _normalize_finding(ctx: dict, subject_id: str, entry, eligible: list,
         if grounded is not None and grounded not in quotes and len(quotes) < MAX_QUOTES:
             quotes.append(grounded)
     finding["note"] = _clean_note(entry.get("note", ""))
-    if _quoted(subject_id, state) and len(quotes) == 0:
+    if not _enough_quotes(subject_id, state, quotes):
         print("[DOWNGRADE] " + subject_id + " " + state + ": no grounded quote; raw "
               + repr(raw_quotes)[:240])
         return finding
@@ -1534,7 +1553,7 @@ def _valid_finding(ctx: dict, f, subject_id: str, eligible: list, texts,
         if q in seen or _spliced(q["text"]) or not _quote_grounded(q, quotable, texts):
             return False
         seen.append(q)
-    return not _quoted(subject_id, f["state"]) or len(f["quotes"]) > 0
+    return _enough_quotes(subject_id, f["state"], f["quotes"])
 
 
 def _parse_payload(text, ctx: dict, texts=None):

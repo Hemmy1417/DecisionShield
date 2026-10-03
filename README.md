@@ -15,14 +15,19 @@ consensus-backed results.**
 <!-- DEPLOYMENT:START -->
 ## Canonical deployment
 
-[`0xc95E80E2a1bDe77A2e8aCB18fcaa374a6385cBf0`](https://explorer-studio.genlayer.com/address/0xc95E80E2a1bDe77A2e8aCB18fcaa374a6385cBf0)
-on GenLayer StudioNet (chain id 61999), from commit `8f571fc`, deployed source read
-back with `gen_getContractCode` and **byte-identical** to this repository.
-Deployment transaction
-[`0xa3a034eed9ec7c91230005474c1a861897eb1aa395025190a426c8b476057509`](https://explorer-studio.genlayer.com/tx/0xa3a034eed9ec7c91230005474c1a861897eb1aa395025190a426c8b476057509),
-FINALIZED, leader execution SUCCESS. It supersedes a first deployment
-(`deploy/superseded/0x99612d2d/`) - see
-[`DECISION.md`](DECISION.md#the-panels-subjects).
+| | |
+|---|---|
+| Network | GenLayer StudioNet, chain id 61999 |
+| Contract | [`0x6B3C122f3b34352Ef25E94F26E570C8BF00cB6BC`](https://explorer-studio.genlayer.com/address/0x6B3C122f3b34352Ef25E94F26E570C8BF00cB6BC) |
+| Explorer | `https://explorer-studio.genlayer.com/address/0x6B3C122f3b34352Ef25E94F26E570C8BF00cB6BC` |
+| Deployment tx | [`0x13ccc0effebf47ded97076a24085751803d1f90e721406a0e9df660772d76887`](https://explorer-studio.genlayer.com/tx/0x13ccc0effebf47ded97076a24085751803d1f90e721406a0e9df660772d76887) |
+| Finality / status | FINALIZED, leader execution SUCCESS |
+| Consensus result | AGREE x3, 2 validators idle |
+| Deployment source commit | `43c9ec1` |
+| Current source parity | deployed source read back with `gen_getContractCode`: **byte-identical** to `contracts/decisionshield.py` on `main` |
+
+It supersedes two earlier deployments (`deploy/superseded/`) - see
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#how-the-live-evidence-was-reached).
 <!-- DEPLOYMENT:END -->
 
 ## The question
@@ -47,17 +52,35 @@ inputs, the model's recorded output and its own explanation. Today the reading
 is done by the operator's compliance service, an internal reviewer, or one model
 call: one authority, in private.
 
-## Why GenLayer is load-bearing
+## Why GenLayer
 
-Delete GenLayer and the answer comes from the party whose system is under test,
-or from one reviewer whose reading nobody can check. The question is a reading of
-a prose policy against case evidence and a model's account of itself. Several
-independent validators can each perform that reading on bytes they fetch
-themselves, refuse a leader whose verdict is well-formed but wrong, and leave a
-typed record a third system can act on.
+| Without GenLayer | What you get |
+|---|---|
+| the operator's own compliance service | the party under test grades itself |
+| one external reviewer or one model call | one trusted reporter whose reading nobody can check |
+| a deterministic parser | cannot read a prose policy against a model's explanation |
+| a price or data oracle | wrong problem: there is no number to report, only a reading |
 
-Deterministic code owns everything else: identity, hashes, versions, bounds,
-deadlines, replay protection, transitions and storage.
+## Delete GenLayer: what breaks?
+
+The question is a reading of a prose policy against case evidence and a model's
+account of itself. Delete GenLayer and that reading comes from one party, in
+private. With it, several independent validators each fetch the same pinned
+bytes, perform the reading themselves, refuse a leader whose verdict is
+well-formed but wrong, and leave a typed record a third system can act on.
+Deterministic code has no input from which to derive "the violation condition is
+met" - consensus supplies it, and nothing else.
+
+## Why this is not a rejected pattern
+
+| Pattern | Why DecisionShield is not it |
+|---|---|
+| thin LLM wrapper | the model never chooses the verdict: it returns per-subject readings, and code derives the verdict, severity and compliance flag |
+| generic AI app | one bounded question, typed outcomes, no UI, no chat |
+| format-only validator | each validator re-fetches, re-reads, re-grounds every quote in its own bytes and re-derives the verdict |
+| caller-authored evidence | the policy and every pinned item are bound to a sha256 the round re-checks; the explanation is never evidence |
+| toy storage | versioned challenges, bounded histories, a lifecycle with contest, finality and lapse |
+| full application | contract only, no frontend, no funds |
 
 ## Evidence roles - and the explanation
 
@@ -112,10 +135,18 @@ publish_challenge ──► OPEN ──(deadline)──► CLOSED
         └─ cancel_challenge (publisher, before any case) ──► CANCELLED
 
 submit_case ──► PENDING ──resolve──► RESOLVED ──(contest window)──► finalize ──► FINAL
-                  │  │                  └─ contest (tester or publisher, once)
-                  │  └─ withdraw_case (tester) ──► CANCELLED
-                  └─ lapse_case (anyone, after the resolve window) ──► CANCELLED
+               │ ▲  │ │                └─ contest (tester or publisher, once)
+               │ └──┘ │
+               │  resolve with evidence unavailable: recorded, stays PENDING
+               │      └─ withdraw_case (tester) ──► CANCELLED
+               └─ lapse_case (anyone, after the resolve window)
+                    ├─ never read           ──► CANCELLED
+                    └─ evidence unavailable ──► FINAL, EVIDENCE_UNAVAILABLE
 ```
+
+An outage never ends a case early: a round that cannot read the evidence is
+recorded and the case stays open to be resolved again, and a contest round
+during an outage neither replaces the standing verdict nor spends the contest.
 
 | Step | Who |
 |---|---|
@@ -132,6 +163,24 @@ there: `get_challenge`, `get_submission`, `get_verdict`,
 `get_challenge_status`, `get_policy_version` - plus `get_resolution`,
 `get_latest_resolution`, `get_history`, `get_actions`, `list_challenges`,
 `list_submissions`, `get_stats` and `get_config`.
+
+## Nondeterministic operations
+
+| Call | Where | Why irreducibly nondeterministic |
+|---|---|---|
+| `gl.nondet.web.get` | `_fetch_source`, for the policy and each declared item | the documents live off chain; each validator must fetch them itself |
+| `gl.nondet.exec_prompt` | `_node_round`, once per round | reading a prose policy against a case and an explanation is a judgement no parser makes |
+
+## Deterministic responsibilities
+
+Identity and authorisation; challenge and policy hashes and versions; URL and
+host admission; the privacy guard; one case per tester per challenge and ten open
+cases per tester; deadlines and windows from transaction time; digest checks on
+every retrieval; the marker scan for text addressed to the adjudicator; the code
+reasons that decide a round without the panel; quote grounding and the
+which-item-may-be-quoted rule; the derivation of verdict, reason, severity,
+criteria and evidence status; contest, finality, lapse and withdrawal; bounded
+storage and pagination.
 
 ## Validator design
 
@@ -151,6 +200,22 @@ criterion. Notes and quote choice may differ. [`docs/CONSENSUS.md`](docs/CONSENS
   No raw personal financial data is required or stored.
 
 [`docs/SECURITY.md`](docs/SECURITY.md).
+
+## Limitations
+
+- Not legal, regulatory or financial advice, and not a certification.
+- A verdict is about one decision against one declared policy, on the evidence
+  evaluated - not proof of absolute truth about the model.
+- Honest-majority assumption over validators; where honest models split, no
+  majority forms and nothing is stored.
+- Evidence availability depends on the hosts a challenge names; a host that goes
+  down makes a case `EVIDENCE_UNAVAILABLE`, never a verdict.
+- Readings are model judgements: notes and quote choice vary between validators,
+  and only the fields listed under validator design are compared.
+- The marker scan and the privacy guard are heuristics: no perfect
+  prompt-injection or privacy guarantee.
+- Histories and pages are bounded; one contest per case.
+- A StudioNet deployment, not a production audit.
 
 ## Reuse surface
 
@@ -190,6 +255,18 @@ for the reasons they were sent to test. Every transaction is linked in
 <!-- VERIFIED:END -->
 
 ## Reviewer fast path
+
+```bash
+git clone https://github.com/Hemmy1417/DecisionShield.git && cd DecisionShield
+pip install -r requirements-test.txt
+python scripts/fetch_genvm_bundle.py
+python -m pytest tests/direct -q
+python scripts/mutation_check.py
+python scripts/deploy_studionet.py --verify
+python -m pytest tests/integration -q
+```
+
+Then read:
 
 1. [`DECISION.md`](DECISION.md) - the specification, written before the contract,
    and what the first diagnostic pass changed.

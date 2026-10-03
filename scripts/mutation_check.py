@@ -299,6 +299,12 @@ MUTATIONS = [
     m("two items may declare the same bytes", '            if entry["sha256"] in digests:'),
     m("a domain may carry a path or port",
       '        if not (("a" <= ch <= "z") or ("0" <= ch <= "9") or ch in ".-"):'),
+    m("one item may contradict itself",
+      '        return len(set(q["evidence_id"] for q in quotes)) >= 2',
+      "        return len(quotes) > 0"),
+    m("the panel is not told a wrong decision is not a contradiction",
+      "This subject is NOT about whether the decision was right.",
+      "This subject is about the case."),
     m("a note may carry an identifier or a marker",
       '    if note != "" and (_evaluator_hits(', '    if False and (_evaluator_hits('),
 ]

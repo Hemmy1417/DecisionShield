@@ -468,4 +468,4 @@ def test_the_contract_source_is_ascii_with_lf_endings():
     raw = (pathlib.Path(__file__).resolve().parents[2] / "contracts"
            / "decisionshield.py").read_bytes()
     assert raw.decode("ascii") and b"\r" not in raw
-    assert raw.startswith(b"# v0.2.0\n# { \"Depends\": \"py-genlayer:1jb45aa8")
+    assert raw.startswith(b"# v0.2.1\n# { \"Depends\": \"py-genlayer:1jb45aa8")

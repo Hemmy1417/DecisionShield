@@ -1,0 +1,25 @@
+05:12:44 contract 0x6B3C122f3b34352Ef25E94F26E570C8BF00cB6BC phase full
+05:12:44 phase challenges
+05:12:44   challenge:credit-line: publish_challenge as publisher
+05:13:22     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+    rpc transient on gen_call (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+05:13:31     credit-line -> DS-000002
+05:13:31 phase cases
+05:13:33   file:DS11: submit_case as t11
+05:14:11     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+05:14:15   file:DS01: submit_case as t01
+05:14:54     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+05:14:57   resolve:DS01: resolve as keeper
+05:16:37     FINALIZED/SUCCESS votes agree,agree,agree,idle,idle
+05:16:38     DS01: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+05:16:38   contest:DS01: contest as publisher
+    rpc transient on eth_sendRawTransaction (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: ('Connection aborted.', RemoteDisconnec; retry in 5s
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+05:18:35     FINALIZED/SUCCESS votes disagree,agree,agree,disagree,agree
+    rpc transient on gen_call (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+05:18:42     DS01:contest: INCONCLUSIVE/EVIDENCE_CONTRADICTORY HELD
+05:18:44   file:DS02: submit_case as t02
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+05:19:23     FINALIZED/SUCCESS votes idle,agree,agree,agree,idle
+05:19:27   resolve:DS02: resolve as keeper

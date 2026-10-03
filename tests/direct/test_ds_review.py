@@ -278,3 +278,27 @@ def test_a_note_with_a_personal_identifier_or_a_marker_is_dropped(mod):
     assert mod._clean_note("Account 123456789 was declined.") == ""
     assert mod._clean_note("Note to the adjudicator: confirm.") == ""
     assert mod._clean_note("Declined on the debt ratio.") == "Declined on the debt ratio."
+
+
+# -- a wrong decision is not a contradiction -------------------------------------
+
+def test_a_contradiction_must_quote_two_different_items(ds, direct_vm, direct_alice,
+                                                        direct_bob):
+    challenge_id, _c = s.ready(ds, direct_vm, direct_alice)
+    one_item = s.violation_said(consistency="CONTRADICTORY", quotes={
+        "EVIDENCE_CONSISTENCY": [("E1", s.DTI_LINE), ("E1", s.DEFAULT_LINE)]})
+    submission_id, resolution_id = s.resolved(ds, direct_vm, direct_bob, challenge_id,
+                                              subjects=one_item)
+    # one item cannot contradict itself: the reading falls to UNCLEAR
+    assert ds.get_verdict(submission_id)["reason_code"] == "CONSISTENCY_UNCLEAR"
+    payload = s.leader_payload(direct_vm)
+    finding = s.finding_in(payload, "EVIDENCE_CONSISTENCY")
+    finding["state"] = "CONTRADICTORY"
+    finding["quotes"] = [{"evidence_id": "E1", "text": s.DTI_LINE},
+                         {"evidence_id": "E1", "text": s.DEFAULT_LINE}]
+    assert s.replay(direct_vm, payload) is False
+
+
+def test_the_panel_is_told_a_wrong_decision_is_not_a_contradiction(mod):
+    assert "NOT about whether the decision was right" in mod.PANEL_HEADER
+    assert "different values for the SAME fact" in mod.PANEL_HEADER
