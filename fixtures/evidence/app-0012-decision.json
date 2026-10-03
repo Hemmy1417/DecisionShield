@@ -3,7 +3,8 @@
  "entries": [
   "Decision: DECLINE.",
   "Risk score: 388.",
-  "Top contributing factor: debt-to-income ratio 52 percent, above the 40 percent limit."
+  "Top contributing factor: debt-to-income ratio 52 percent, above the 40 percent limit.",
+  "Factor weights: debt-to-income ratio 1.00, accounts in default 0.00, age band 0.00."
  ],
  "notice": "TEST / DEMONSTRATION ONLY - NOT FOR PRODUCTION. Synthetic data: the lender, its policy, the applications and the decisions exist only in this repository.",
  "record": "model-output"

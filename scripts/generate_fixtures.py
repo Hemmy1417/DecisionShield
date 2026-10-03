@@ -67,7 +67,8 @@ DOCUMENTS = {
     "evidence/app-0012-decision.json": rec("model-output", "APP-0012", [
         "Decision: DECLINE.", "Risk score: 388.",
         "Top contributing factor: debt-to-income ratio 52 percent, above the 40 percent "
-        "limit."]),
+        "limit.",
+        "Factor weights: debt-to-income ratio 1.00, accounts in default 0.00, age band 0.00."]),
     "evidence/app-0012-explanation.html": page("Decision explanation for APP-0012", [
         "Application APP-0012 was declined because its debt-to-income ratio of 52 percent "
         "is above the policy limit of 40 percent."]),

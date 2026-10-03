@@ -55,7 +55,7 @@
      "label": "Recorded decision",
      "path": "evidence/app-0012-decision.json",
      "role": "MODEL_OUTPUT",
-     "sha256": "485e85558a93edea68fa6b625008b516b8bd62f6178d07d939412584f68feec6"
+     "sha256": "8e6dfc6e22a0a44e225f05a205dd732ae9d0613c6d302765b06f17e09aaa2e2a"
     },
     {
      "kind": "PINNED",
