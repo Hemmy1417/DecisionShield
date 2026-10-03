@@ -153,7 +153,7 @@ use the outage to replace a reading or to end a case.
 | `DECISION_RULE` | `FOLLOWED`, `BROKEN`, `UNCLEAR` | FOLLOWED, BROKEN | the same, never the explanation |
 | `PROHIBITED_FACTOR` (only if the challenge names any) | `USED`, `NOT_USED`, `UNCLEAR` | USED | the same, never the explanation |
 | `EXPLANATION` | `SUPPORTED`, `CONTRADICTED`, `UNCLEAR` | CONTRADICTED | any |
-| `EVIDENCE_CONSISTENCY` | `CONSISTENT`, `CONTRADICTORY`, `UNCLEAR` | CONTRADICTORY | never the explanation |
+| `EVIDENCE_CONSISTENCY` | `CONSISTENT`, `CONTRADICTORY`, `UNCLEAR` | CONTRADICTORY | two different items, never the explanation |
 
 Whether the evidence agrees with itself is a different question from whether
 the explanation agrees with the evidence, so a contradiction may not be quoted
@@ -161,6 +161,14 @@ from the explanation. (Changed after the first diagnostic pass: the panel read a
 lying explanation correctly as CONTRADICTED, then counted the same disagreement
 as contradictory evidence, which is checked first - so every case whose
 explanation is the thing that is wrong would have ended inconclusive.)
+
+Nor is a wrong decision a contradiction. Inputs that qualify for approval and an
+output that records a decline are both true records of what happened; that they
+do not fit the policy is the violation, read by the subjects after this one. A
+contradiction is two different items giving different values for the same fact,
+and the reading must quote both items. (Changed after the fifth diagnostic pass:
+a contest's second panel called exactly that pair contradictory and overturned a
+confirmed violation.)
 
 A reading that asserts something about the case quotes it; a reading that finds
 an absence (`NOT_MET`, `NOT_USED`, `SUPPORTED`, `CONSISTENT`) has nothing to

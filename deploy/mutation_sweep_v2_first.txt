@@ -3,9 +3,9 @@ accept-control: unmodified copy must pass ...
 control green; 110 mutations over 4 job(s)
 
   [1/110] killed  : a 404 is a generic failure
-  [2/110] killed  : a redirect is read as a retrieved document
-  [3/110] killed  : a binary content type is read
-  [4/110] killed  : a forbidden document is a generic failure
+  [2/110] killed  : a binary content type is read
+  [3/110] killed  : a forbidden document is a generic failure
+  [4/110] killed  : a redirect is read as a retrieved document
   [5/110] killed  : a pinned item's bytes are not checked against the declared digest
   [6/110] killed  : a digest mismatch is judged by the panel anyway
   [7/110] killed  : an undecodable body is read
@@ -17,32 +17,32 @@ control green; 110 mutations over 4 job(s)
   [13/110] killed  : a finding may be quoted from the explanation
   [14/110] killed  : markup and attributes are not scanned
   [15/110] killed  : the title is not scanned
-  [16/110] killed  : a false explanation counts as contradictory evidence
-  [17/110] killed  : the decision may be read from any item
-  [18/110] killed  : an assertion about the case needs no quote
-  [19/110] killed  : the gate lets a reading quote any item
+  [16/110] killed  : the decision may be read from any item
+  [17/110] killed  : an assertion about the case needs no quote
+  [18/110] killed  : the gate lets a reading quote any item
+  [19/110] SURVIVED: a false explanation counts as contradictory evidence
   [20/110] killed  : a spliced quote is accepted when the panel answers
   [21/110] killed  : a quote need not ground in the text this node retrieved
   [22/110] killed  : prohibited factors are asked about when none are declared
-  [23/110] killed  : a code reason about evidence is not EVIDENCE_UNAVAILABLE
-  [24/110] killed  : a spliced quote passes the gate
+  [23/110] killed  : a spliced quote passes the gate
+  [24/110] killed  : a code reason about evidence is not EVIDENCE_UNAVAILABLE
   [25/110] killed  : a code reason is overridden by the panel's reading
   [26/110] killed  : an unusable panel answer reaches a verdict
   [27/110] killed  : contradictory evidence reaches a verdict
   [28/110] killed  : unclear consistency reaches a verdict
   [29/110] killed  : a decision the output does not record is judged anyway
   [30/110] killed  : an unclear decision is judged anyway
-  [31/110] killed  : a violation needs no bound bytes
-  [32/110] killed  : an unclear violation falls through to compliance
+  [31/110] killed  : an unclear violation falls through to compliance
+  [32/110] killed  : a violation needs no bound bytes
   [33/110] killed  : a broken rule beside an unmet violation is compliance
   [34/110] killed  : a prohibited factor beside an unmet violation is compliance
   [35/110] killed  : a contradicted explanation beside an unmet violation is compliance
   [36/110] killed  : an unclear criterion is compliance
-  [37/110] killed  : compliance needs no bound bytes
+  [37/110] killed  : the severity is not the challenge's
   [38/110] killed  : a live item counts as bound
-  [39/110] killed  : the severity is not the challenge's
-  [40/110] killed  : the consequence is not compared
-  [41/110] killed  : a live explanation unbinds the case
+  [39/110] killed  : compliance needs no bound bytes
+  [40/110] killed  : a live explanation unbinds the case
+  [41/110] killed  : the consequence is not compared
   [42/110] killed  : a positive verdict's criteria are not compared
   [43/110] killed  : the leader's payload is gated against its own text, not this node's
   [44/110] killed  : a payload about another case is accepted
@@ -55,8 +55,8 @@ control green; 110 mutations over 4 job(s)
   [51/110] killed  : the windows are unbounded
   [52/110] killed  : challenge text may address the adjudicator
   [53/110] killed  : a challenge may close in the past
-  [54/110] killed  : free text is scanned as written, not in the scan form
-  [55/110] killed  : an IP literal is a host
+  [54/110] killed  : an IP literal is a host
+  [55/110] killed  : free text is scanned as written, not in the scan form
   [56/110] killed  : an email address passes the privacy guard
   [57/110] killed  : a long digit run passes the privacy guard
   [58/110] killed  : a space continues a digit run
@@ -65,13 +65,13 @@ control green; 110 mutations over 4 job(s)
   [61/110] killed  : a live item may declare a digest it is not held to
   [62/110] killed  : an item may claim the policy role
   [63/110] killed  : an item may come from any host
-  [64/110] killed  : a stale policy version is accepted
-  [65/110] killed  : the same document may be declared twice
-  [66/110] killed  : a required role may be missing at filing
-  [67/110] killed  : a policy hash mismatch is accepted
-  [68/110] killed  : the challenge hash is not checked
-  [69/110] killed  : a case may be filed after the deadline
-  [70/110] killed  : the evidence list is unbounded
+  [64/110] killed  : the same document may be declared twice
+  [65/110] killed  : a stale policy version is accepted
+  [66/110] killed  : a policy hash mismatch is accepted
+  [67/110] killed  : the challenge hash is not checked
+  [68/110] killed  : a required role may be missing at filing
+  [69/110] killed  : the evidence list is unbounded
+  [70/110] killed  : a case may be filed after the deadline
   [71/110] killed  : a case may be filed against a cancelled challenge
   [72/110] killed  : one tester may file twice
   [73/110] killed  : the claimed violation may be anything
@@ -83,8 +83,8 @@ control green; 110 mutations over 4 job(s)
   [79/110] killed  : a verdict may be contested twice
   [80/110] killed  : a stranger may contest
   [81/110] killed  : a verdict may be contested after its window
-  [82/110] killed  : a verdict may be final inside its contest window
-  [83/110] killed  : anyone may withdraw a case
+  [82/110] killed  : anyone may withdraw a case
+  [83/110] killed  : a verdict may be final inside its contest window
   [84/110] killed  : a case may lapse while its window is open
   [85/110] killed  : a challenge with cases may be cancelled
   [86/110] killed  : anyone may cancel a challenge
@@ -107,10 +107,10 @@ control green; 110 mutations over 4 job(s)
   [103/110] killed  : word-splitting named entities are not decoded
   [104/110] killed  : prohibited factors skip the privacy guard
   [105/110] killed  : an evidence URL may carry an email address
-  [106/110] killed  : one item may contradict itself
-  [107/110] killed  : two items may declare the same bytes
-  [108/110] killed  : a domain may carry a path or port
-  [109/110] killed  : the panel is not told a wrong decision is not a contradiction
+  [106/110] killed  : two items may declare the same bytes
+  [107/110] killed  : a domain may carry a path or port
+  [108/110] killed  : the panel is not told a wrong decision is not a contradiction
+  [109/110] killed  : one item may contradict itself
   [110/110] killed  : a note may carry an identifier or a marker
 
 killed:   a redirect is read as a retrieved document
@@ -128,7 +128,7 @@ killed:   text in the visible body is not scanned
 killed:   markup and attributes are not scanned
 killed:   the title is not scanned
 killed:   a finding may be quoted from the explanation
-killed:   a false explanation counts as contradictory evidence
+SURVIVED: a false explanation counts as contradictory evidence
 killed:   the decision may be read from any item
 killed:   the gate lets a reading quote any item
 killed:   an assertion about the case needs no quote
@@ -224,4 +224,4 @@ killed:   one item may contradict itself
 killed:   the panel is not told a wrong decision is not a contradiction
 killed:   a note may carry an identifier or a marker
 
-mutations: 110 killed, 0 survived, 0 anchor missing
+mutations: 109 killed, 1 survived, 0 anchor missing

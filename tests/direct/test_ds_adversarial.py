@@ -57,9 +57,7 @@ def test_a_false_explanation_is_not_contradictory_evidence(ds, direct_vm, direct
     question from whether the explanation agrees with it, so a contradiction may
     not be quoted from the explanation."""
     subjects = s.violation_said(consistency="CONTRADICTORY", quotes={
-        "EVIDENCE_CONSISTENCY": [("E2", s.FACTOR_USED_LINE), ("E3", s.EXPLAIN_LINE)]})
-    subjects["EVIDENCE_CONSISTENCY"]["quotes"] = [
-        {"evidence_id": "E3", "text": s.EXPLAIN_LINE}]
+        "EVIDENCE_CONSISTENCY": [("E1", s.DTI_LINE), ("E3", s.EXPLAIN_LINE)]})
     submission_id, resolution_id = _resolved(ds, direct_vm, direct_alice, direct_bob,
                                              subjects=subjects)
     rec = s.record_of(ds, resolution_id)

@@ -99,6 +99,12 @@ spends the contest. If the evidence stays unreadable through the whole window,
 the case becomes final as `EVIDENCE_UNAVAILABLE` - the outage stays on the record
 - and the tester may file again while the challenge is open.
 
+**Stopping a case at the consistency check.** Contradictory evidence ends a round
+as inconclusive before the violation is read, so that reading is the cheapest
+place to bury one. It may not quote the explanation, it must quote two different
+items, and the panel is told that a decision which does not follow from the
+inputs is a violation question, not a contradiction.
+
 **Altered quotes.** A stored quote must match the item's words in order, and a
 minus sign, a comparison, a percent sign or a decimal point counts as a word, so
 a quote cannot change what a number says. Grounding proves where a passage came
@@ -129,8 +135,9 @@ in code; `tests/direct/test_ds_adversarial.py` works through them one at a time.
 ## Fail-closed policy
 
 Both positive outcomes are guarded the same way: a confirmed violation and a
-compliance finding each need the readings they rest on quoted from bound,
-non-explanation evidence, and every other branch is `INCONCLUSIVE` or
+compliance finding each need the readings they rest on quoted from
+non-explanation evidence, in a case whose every evidence item is pinned, and
+every other branch is `INCONCLUSIVE` or
 `EVIDENCE_UNAVAILABLE`. A rule followed with a contradicted explanation is
 `CRITERIA_CONFLICT`, not compliance: a system that gives a false reason for a
 lawful decision does not get a compliance stamp.

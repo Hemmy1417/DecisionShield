@@ -357,8 +357,8 @@ def record(chain: Chain, step: str, label: str, sid: str, case: dict,
         held = resolution["verdict"] == case["expect_verdict"] \
             and resolution["reason_code"] in allowed
         if round_two:
-            held = resolution["round"] == 2 and resolution["supersedes"] != ""
-            entry["expected_verdict"] = "a second reading, superseding the first"
+            held = held and resolution["round"] == 2 and resolution["supersedes"] != ""
+            entry["expected_verdict"] = "a second reading that upholds the first"
         elif case["expect_verdict"] == "EVIDENCE_UNAVAILABLE":
             # unavailable evidence never ends a case: it stays open to be read
             entry["status_after"] = chain.read("get_submission", [sid])["status"]

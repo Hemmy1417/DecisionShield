@@ -18,15 +18,15 @@ consensus-backed results.**
 | | |
 |---|---|
 | Network | GenLayer StudioNet, chain id 61999 |
-| Contract | [`0x6B3C122f3b34352Ef25E94F26E570C8BF00cB6BC`](https://explorer-studio.genlayer.com/address/0x6B3C122f3b34352Ef25E94F26E570C8BF00cB6BC) |
-| Explorer | `https://explorer-studio.genlayer.com/address/0x6B3C122f3b34352Ef25E94F26E570C8BF00cB6BC` |
-| Deployment tx | [`0x13ccc0effebf47ded97076a24085751803d1f90e721406a0e9df660772d76887`](https://explorer-studio.genlayer.com/tx/0x13ccc0effebf47ded97076a24085751803d1f90e721406a0e9df660772d76887) |
+| Contract | [`0x8E2c66279fB5Fa0Ab6867573407aeA5787Baf467`](https://explorer-studio.genlayer.com/address/0x8E2c66279fB5Fa0Ab6867573407aeA5787Baf467) |
+| Explorer | `https://explorer-studio.genlayer.com/address/0x8E2c66279fB5Fa0Ab6867573407aeA5787Baf467` |
+| Deployment tx | [`0x131cdb62f0a0203c816d2b2d96616d2066101d4d08e23913faeda7480decc262`](https://explorer-studio.genlayer.com/tx/0x131cdb62f0a0203c816d2b2d96616d2066101d4d08e23913faeda7480decc262) |
 | Finality / status | FINALIZED, leader execution SUCCESS |
 | Consensus result | AGREE x3, 2 validators idle |
-| Deployment source commit | `43c9ec1` |
+| Deployment source commit | `0fca5ad` |
 | Current source parity | deployed source read back with `gen_getContractCode`: **byte-identical** to `contracts/decisionshield.py` on `main` |
 
-It supersedes two earlier deployments (`deploy/superseded/`) - see
+It supersedes three earlier deployments (`deploy/superseded/`) - see
 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#how-the-live-evidence-was-reached).
 <!-- DEPLOYMENT:END -->
 
@@ -110,7 +110,8 @@ PENDING
 
 `INCONCLUSIVE` and `EVIDENCE_UNAVAILABLE` are never collapsed into compliance or
 violation, and **both** positive verdicts need their deciding passages quoted
-from bound, non-explanation evidence.
+from non-explanation evidence, in a case whose every evidence item is pinned to
+a sha256. Only the explanation, which is never evidence, may be unpinned.
 
 ```json
 {
@@ -235,23 +236,28 @@ reading verdict, severity, criteria and the policy hash.
 <!-- VERIFIED:START -->
 | Check | Result |
 |---|---|
-| `python -m pytest tests/direct -q` | 116 passed |
+| `python -m pytest tests/direct -q` | 139 passed |
 | pickling of the nondeterministic closures | checked (`direct_vm.check_pickling = True`) |
 | `genvm-lint check contracts/decisionshield.py --json` (`GENVM_VERSION=v0.3.0-rc7`) | lint ok (3 checks), validation ok, 24 methods (16 view, 8 write), exit 0 |
 | `ruff check .` | clean |
 | `python scripts/generate_fixtures.py --check` | 16 fixture files regenerate byte for byte |
-| `python scripts/mutation_check.py` | 85 mutations, **85 killed, 0 survived** |
+| `python scripts/mutation_check.py` | 110 mutations, **110 killed, 0 survived** |
 | `python scripts/deploy_studionet.py --verify` | deployed and repository sha256 equal, 24 schema methods |
-| `python -m pytest tests/integration -q` | 7 passed, 1 skipped (the live-write test runs only with `DS_LIVE_WRITES=1`) |
-| live run of record | 37 transactions, **14 of 14 outcomes held, 11 of 11 refusals refused** |
+| `python -m pytest tests/integration -q` | 9 passed, 1 skipped (the live-write test runs only with `DS_LIVE_WRITES=1`) |
+| live run of record | 39 transactions, **16 of 16 outcomes held, 11 of 11 refusals refused** |
 
 Every verdict the contract can store was reached on chain against the canonical
-deployment: a confirmed violation (and the publisher's contest upholding it),
-compliance, a violation won by an applicant's injected note, four distinct
-inconclusive reasons, two unavailable-evidence outcomes, two finalized verdicts
-read back through `is_policy_violation_confirmed`, a lapse, and eleven refusals
-for the reasons they were sent to test. Every transaction is linked in
+deployment: a confirmed violation, upheld by the publisher's contest; compliance;
+a violation won by an applicant's injected note; four distinct inconclusive
+reasons; two unavailable-evidence rounds that left their cases pending, one of
+which stayed unreadable through its window, became final as unavailable and was
+filed again by the same tester; two finalized verdicts read back through
+`is_policy_violation_confirmed`; a lapse; and eleven refusals for the reasons
+they were sent to test. Every transaction is linked in
 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#live-run-of-record).
+
+The contract was then read by an adversary, and changed: see
+[What the adversarial review changed](DECISION.md#what-the-adversarial-review-changed).
 <!-- VERIFIED:END -->
 
 ## Reviewer fast path
@@ -269,15 +275,15 @@ python -m pytest tests/integration -q
 Then read:
 
 1. [`DECISION.md`](DECISION.md) - the specification, written before the contract,
-   and what the first diagnostic pass changed.
+   and what the diagnostic passes and the adversarial review changed.
 2. [`docs/CONSENSUS.md`](docs/CONSENSUS.md) - which evidence each reading may
    quote, and what validators compare.
 3. `contracts/decisionshield.py` - `_verdict_for`, `_quotable`, `_code_reason`,
    `_privacy_error`.
 4. [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) - every transaction of the run of
-   record.
+   record, and the five passes before it.
 5. `tests/direct/test_ds_adversarial.py` - the brief's adversarial matrix, one
-   test at a time.
+   test at a time; `tests/direct/test_ds_review.py` - what the review found.
 
 ## Licence
 
