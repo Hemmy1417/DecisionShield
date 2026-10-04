@@ -191,7 +191,7 @@ which-item-may-be-quoted rule; the derivation of verdict, reason, severity,
 criteria and evidence status; resolve retries, each party's contest, finality,
 lapse and withdrawal, with caps on every round; bounded storage and pagination.
 
-## Validator design
+## Equivalence / validator design
 
 Each validator reproduces the round from its own retrieval and model call, gates
 the leader's payload against its own text, then compares what was retrieved and
@@ -199,6 +199,17 @@ what it leads to: what each node could do with each item and the digest of its
 bytes, the verdict, the reason, and - for a positive verdict - every criterion.
 Notes, quote choice and HTTP details may differ, and every record says so.
 [`docs/CONSENSUS.md`](docs/CONSENSUS.md).
+
+## Safety and failure semantics
+
+Every ambiguity fails closed. A failed fetch, a digest that does not match, an
+unreadable policy or any declared item that cannot be read is
+`EVIDENCE_UNAVAILABLE`: recorded, never a verdict, and never the end of a case
+while its window is open. Text addressed to the adjudicator, an unusable model
+answer, contradictory or unclear evidence, a decision the record does not show,
+an unclear reading, or a document read only in part is `INCONCLUSIVE`. Neither
+is ever collapsed into compliance or violation, and where validators disagree
+the round stores nothing. [`docs/CONSENSUS.md`](docs/CONSENSUS.md#failure-semantics).
 
 ## Financial safety, privacy, and no false guarantees
 
@@ -212,6 +223,19 @@ Notes, quote choice and HTTP details may differ, and every record says so.
   personal financial data is required or stored.
 
 [`docs/SECURITY.md`](docs/SECURITY.md).
+
+## Reuse surface
+
+```python
+answer = IDecisionShield(DS).view().is_policy_violation_confirmed(submission_id)
+if answer["confirmed"] and answer["final"]:
+    ...   # the consumer's own review process; DecisionShield takes no action
+```
+
+Consumers: fintech model-risk and compliance teams reading the full record; model
+monitoring polling one boolean; risk, insurance and infrastructure systems
+reading verdict, severity, criteria and the policy hash.
+[`docs/INTEGRATION.md`](docs/INTEGRATION.md).
 
 ## Limitations
 
@@ -237,19 +261,6 @@ Notes, quote choice and HTTP details may differ, and every record says so.
 - Histories, rounds and pages are bounded; one read contest per party.
 - A StudioNet deployment reviewed adversarially four times by its author's own
   tooling - not an independent production audit.
-
-## Reuse surface
-
-```python
-answer = IDecisionShield(DS).view().is_policy_violation_confirmed(submission_id)
-if answer["confirmed"] and answer["final"]:
-    ...   # the consumer's own review process; DecisionShield takes no action
-```
-
-Consumers: fintech model-risk and compliance teams reading the full record; model
-monitoring polling one boolean; risk, insurance and infrastructure systems
-reading verdict, severity, criteria and the policy hash.
-[`docs/INTEGRATION.md`](docs/INTEGRATION.md).
 
 ## Verification
 
