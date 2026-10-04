@@ -38,15 +38,15 @@ python -m pytest tests/integration -q
 
 | | |
 |---|---|
-| Date | 2026-10-03 04:22:26Z |
+| Date | 2026-10-03 09:52:07Z |
 | Deployment method | `scripts/deploy_studionet.py` - genlayer-py 0.16.3 against the StudioNet RPC, then `gen_getContractCode` and `gen_getContractSchema` read back (GenLayer CLI 0.39.2 is installed but was not the deployment route) |
 | Deployer public address | `0xE5A637385057B868D4B464605D3d65d855bab0B6` (a fresh dedicated signer; key in the gitignored `.data/deployer.json`) |
-| Contract | [`0x8E2c66279fB5Fa0Ab6867573407aeA5787Baf467`](https://explorer-studio.genlayer.com/address/0x8E2c66279fB5Fa0Ab6867573407aeA5787Baf467) |
-| Deployment transaction | [`0x131cdb62f0a0203c816d2b2d96616d2066101d4d08e23913faeda7480decc262`](https://explorer-studio.genlayer.com/tx/0x131cdb62f0a0203c816d2b2d96616d2066101d4d08e23913faeda7480decc262) |
+| Contract | [`0x2Eeb9e62Cf44654a90cB7263eD4620b0bb3422E3`](https://explorer-studio.genlayer.com/address/0x2Eeb9e62Cf44654a90cB7263eD4620b0bb3422E3) |
+| Deployment transaction | [`0x5d61744aee027560d56c42f5d0716aa225b29b35f5f15d962db2caff44fdfc48`](https://explorer-studio.genlayer.com/tx/0x5d61744aee027560d56c42f5d0716aa225b29b35f5f15d962db2caff44fdfc48) |
 | Status | FINALIZED, leader execution SUCCESS, votes AGREE x3 (two validators idle) |
-| Source commit | `0fca5ad7f084c1859fefc1f4e62492df2209ac85` |
-| Contract blob | `028876fb03226ec22cffab51c840078064b40925` |
-| Source | byte-identical to the repository (sha256 `d99b97e4...5019`, in `deploy/deployment.json`) |
+| Source commit | `913ccdb4a73ada4979fdc5a8b329e898d151a29c` |
+| Contract blob | `bcb998937b52feebef461129dff1d97e8713edfe` |
+| Source | byte-identical to the repository (sha256 `d7cb4e43...1377`, in `deploy/deployment.json`) |
 | Schema | 24 methods (16 view, 8 write), read from the chain |
 
 ## Verification of record
@@ -55,12 +55,13 @@ python -m pytest tests/integration -q
 |---|---|
 | Source parity | deployed source read back with `gen_getContractCode`; sha256 equal to `contracts/decisionshield.py` on `main` (`python scripts/deploy_studionet.py --verify`) |
 | Integration suite | `python -m pytest tests/integration -q`: 9 passed, 1 skipped (the live-write test runs only with `DS_LIVE_WRITES=1`); each test also passes run alone |
-| Disposable deployments | none were used as evidence. The three earlier deployments, `0x99612D2D`, `0xc95E80E2` and `0x6B3C122f`, are superseded and recorded under `deploy/superseded/`; none is the canonical deployment |
+| Disposable deployments | none were used as evidence. The four earlier deployments, `0x99612D2D`, `0xc95E80E2`, `0x6B3C122f` and `0x8E2c6627`, are superseded and recorded under `deploy/superseded/`; none is the canonical deployment |
 
 ## How the live evidence was reached
 
-Five passes ran before the run of record, on three earlier deployments. Three
-changed the contract and one changed a fixture. All are kept under `deploy/diagnostics/`.
+Seven passes ran before the run of record, six of them on four earlier
+deployments. Four changed the contract, one changed a fixture and one changed
+the run script. All are kept under `deploy/diagnostics/`.
 
 | Pass | Deployment | What it found | What changed |
 |---|---|---|---|
@@ -69,6 +70,8 @@ changed the contract and one changed a fixture. All are kept under `deploy/diagn
 | `pass3_record_v1_0xc95e80e2` | second | the first run of record: 37 transactions, 14 of 14 held, 11 of 11 refused. A read-only adversarial review of the contract afterwards found real defects no test, sweep or live outcome had shown - above all, that the operator under test could bury a case by taking its own policy host down, and that a positive verdict could rest on a `LIVE` input if the readings quoted only the policy | **the contract** (v0.2.0): see [What the adversarial review changed](../DECISION.md#what-the-adversarial-review-changed); redeployed, and this run demoted to a diagnostic |
 | `pass4_0x6b3c122f` | third, `0x6B3C122f` | 39 transactions, 14 of 16 outcomes held, 11 of 11 refused. The compliant case (DS02) read `INCONCLUSIVE` / `CRITERIA_UNCLEAR`: the leader's model would not rule out that age was used, because the inputs carry an age band and the decision record named only its top factor. Three validators agreed, two disagreed | the fixture: the decision record now lists its factor weights, with age at 0.00. The panel was right to hesitate |
 | `pass5_0x6b3c122f` | third | stopped after two cases. The violating case (DS01) was confirmed, then the publisher's contest read it `INCONCLUSIVE` / `EVIDENCE_CONTRADICTORY` and three of five validators agreed: the second panel called the inputs (which qualify for approval) and the output (a decline driven by age) "contradictory". That is not two records disagreeing about a fact - it is the violation | **the contract** (v0.2.1): the consistency subject now says a wrong decision is not a contradiction, defines one as two items giving different values for the same fact, and code requires a contradiction to quote two different items; redeployed |
+| `pass6_record_v2_0x8e2c6627` | fourth, `0x8E2c6627` | the second run of record: 39 transactions, 16 of 16 outcomes held, 11 of 11 refused, no validator disagreeing. Three more read-only reviews followed, each after the previous round's fixes. The second and third found real defects again - a host could take down one pinned record and leave the rest to decide the case; an unpinned input labelled an "explanation" could carry a verdict; a header decided how pinned bytes were read; the favoured party could spend the only contest. The fourth found nothing on the verdict path | **the contract** (v0.3.0 to v0.4.1): see [What the adversarial review changed](../DECISION.md#what-the-adversarial-review-changed); redeployed, and this run demoted to a diagnostic |
+| `pass7_0x2eeb9e62` | canonical | 38 transactions, 15 of 15 outcomes held, 12 of 12 refused - but one refusal was for the wrong reason: the case sent to test the evidence-domain rule was refused for declaring an unpinned item, which v0.4.0 now checks first. The script counted any refusal as held | the run script: the test case is pinned, and a refusal now holds only if it is for the reason it was sent to test |
 
 The lesson of the first row: the design already said an explanation is a claim
 about a decision and never evidence for it, and enforced that for every finding
@@ -86,72 +89,80 @@ The lesson of the fourth: a compliance verdict needs evidence that a prohibited
 factor was *not* used, and a record that says nothing about it leaves a careful
 reader unable to say so. That is the contract failing closed, as designed.
 
-The lesson of the third: a green suite, a clean sweep and a live run that holds
-every outcome show the contract does what its author meant. They do not show
-that what the author meant is safe against the parties it judges. That took a
-reader looking for a way to win.
+The lesson of the third and the sixth is one lesson: a green suite, a clean
+sweep and a live run that holds every outcome show the contract does what its
+author meant. They do not show that what the author meant is safe against the
+parties it judges. That took a reader looking for a way to win - four times,
+until a round found no way to a wrong verdict and no way for one party to
+outlast the other.
 
 ## Live run of record
 
 `python scripts/live_run.py` against the canonical deployment,
-2026-10-03 04:22:50Z to 2026-10-03 05:20:42Z, the
+2026-10-04 01:53:41Z to 2026-10-04 02:54:34Z, the
 policy served from `raw.githubusercontent.com` and the case evidence from the
 jsDelivr mirror of the same commit, `82963e7`, from fourteen accounts: a
 publisher, a keeper, a stranger and eleven testers, one per case.
 
-**39 transactions, 16 of 16 outcomes held, 11 of 11 refusals refused; no
-validator disagreed in any round.** Every verdict the contract can store was
-reached on chain: a decline the policy forbade, resting on the age band,
-`POLICY_VIOLATION_CONFIRMED` with severity `HIGH`, and upheld by the publisher's
-contest; a lawful decline `POLICY_COMPLIANT`; an approval an applicant's own note
-talked the model into, confirmed as a violation; four distinct `INCONCLUSIVE`
-reasons; a wrong digest and an unpublished decision record each recorded as
-`EVIDENCE_UNAVAILABLE` with the case left `PENDING`; the second of those final as
-unavailable once its window passed, and filed again by the same tester; two
-verdicts finalized and read back through `is_policy_violation_confirmed`; a
-lapse; and eleven refusals, each for the reason it was sent to test.
+**38 transactions, 15 of 15 outcomes held, 12 of 12 refusals refused, each for
+the reason it was sent to test; no validator disagreed in any round.** Every
+verdict the contract stores was reached on chain: a decline the policy forbade,
+resting on the age band, `POLICY_VIOLATION_CONFIRMED` with severity `HIGH`, and
+upheld by the publisher's contest; a lawful decline `POLICY_COMPLIANT`; an
+approval an applicant's own note talked the model into, confirmed as a violation;
+four distinct `INCONCLUSIVE` reasons; a wrong digest and an unpublished decision
+record each recorded as `EVIDENCE_UNAVAILABLE` with the case left `PENDING`; the
+second of those final as unavailable once its window passed, and filed again by
+the same tester; two verdicts finalized and read back through
+`is_policy_violation_confirmed`; a lapse; and 12 refusals, among them a case
+that declared unpinned evidence.
+
+One step was sent twice. The script sent `finalize` for the compliant case five
+seconds before its contest window closed; the contract refused it ("the contest
+window closes at ..."), which is the rule working, and the script's wait was
+corrected. The step was sent again after the window and is the transaction in the
+table; the refused attempt is in `deploy/live_run.out`.
 
 | Scenario | Step | Transaction | Recorded | |
 |---|---|---|---|---|
-| lifecycle | `challenge:credit-line` | [`0x06e5cfc6...`](https://explorer-studio.genlayer.com/tx/0x06e5cfc68748418e0378e12ec1f037c087f383a6719b9a890b37d369be715215) | publish_challenge FINALIZED/SUCCESS |  |
-| lifecycle | `file:DS11` | [`0x678d51d4...`](https://explorer-studio.genlayer.com/tx/0x678d51d411af6b7da2c3274263b7254249bb98d5f7532b3f98293a079630fe76) | submit_case FINALIZED/SUCCESS |  |
-| lifecycle | `file:DS01` | [`0x93de9b61...`](https://explorer-studio.genlayer.com/tx/0x93de9b61684789ec1e23d0c7bb9de31f3d905fb4d2d60e764f5b7ae06698c290) | submit_case FINALIZED/SUCCESS |  |
-| success | `resolve:DS01` | [`0x57d03ca6...`](https://explorer-studio.genlayer.com/tx/0x57d03ca6af898b7bad9d70dce2af4c742303d1bfaed2c7bcb23a1abd57f15c95) | POLICY_VIOLATION_CONFIRMED / VIOLATION_CONDITION_MET | held |
-| lifecycle | `contest:DS01` | [`0xea8cffb1...`](https://explorer-studio.genlayer.com/tx/0xea8cffb113bb86ed96802ccef7a3c710ba143737bd39eaaa4a42e720c33c4659) | POLICY_VIOLATION_CONFIRMED / VIOLATION_CONDITION_MET | held |
-| lifecycle | `file:DS02` | [`0xbc924276...`](https://explorer-studio.genlayer.com/tx/0xbc9242763851897fac5c078d4521633aa9570333f036c695ccf590f8fe324f53) | submit_case FINALIZED/SUCCESS |  |
-| success | `resolve:DS02` | [`0xa8f6ca41...`](https://explorer-studio.genlayer.com/tx/0xa8f6ca4125b6cf3ff68170175b1c1d3cee7c345e4634aa0c9bce51eb895c159c) | POLICY_COMPLIANT / RULE_FOLLOWED | held |
-| lifecycle | `file:DS03` | [`0xe7278695...`](https://explorer-studio.genlayer.com/tx/0xe7278695f0cc6ea6c25d063bac360716c377adaf3f542e817c0f0dff78f4f2e1) | submit_case FINALIZED/SUCCESS |  |
-| negative | `resolve:DS03` | [`0xc2995c6e...`](https://explorer-studio.genlayer.com/tx/0xc2995c6ef5d30ec91ce398268b8d20a1d19123feb6a0c0212e00f0cb146b6a3d) | INCONCLUSIVE / DECISION_NOT_RECORDED | held |
-| lifecycle | `file:DS04` | [`0x84d6e4d7...`](https://explorer-studio.genlayer.com/tx/0x84d6e4d7d8b7152ce40c2e3bfff17bc5e398816fb7c73423b1c1c33d0a21c08d) | submit_case FINALIZED/SUCCESS |  |
-| success | `resolve:DS04` | [`0xf3c1a38f...`](https://explorer-studio.genlayer.com/tx/0xf3c1a38f9735b4249bcfb46595329cdef73e541a9d68bed4bda5228663b17e42) | POLICY_VIOLATION_CONFIRMED / VIOLATION_CONDITION_MET | held |
-| lifecycle | `file:DS05` | [`0x808dce78...`](https://explorer-studio.genlayer.com/tx/0x808dce784c6f6a53e1d365d9ad47aef1617e7a722d878eafbc2a25478c27a567) | submit_case FINALIZED/SUCCESS |  |
-| negative | `resolve:DS05` | [`0x534fb3fc...`](https://explorer-studio.genlayer.com/tx/0x534fb3fcf7d440e2422b14d158f9e1cbabe9bf3bd61a0a4be96db87e0f26cd62) | INCONCLUSIVE / CRITERIA_CONFLICT | held |
-| lifecycle | `file:DS06` | [`0x3a2ef1b4...`](https://explorer-studio.genlayer.com/tx/0x3a2ef1b4ddd949e7d58a3190cb02758ed21f68541a49be9e50dc52e14cfbce7e) | submit_case FINALIZED/SUCCESS |  |
-| negative | `resolve:DS06` | [`0x1c255b61...`](https://explorer-studio.genlayer.com/tx/0x1c255b61511e4b007f1325ed09701b7473d6806b12d12d777a963b2ffdd4822b) | INCONCLUSIVE / EVIDENCE_CONTRADICTORY | held |
-| lifecycle | `file:DS07` | [`0x88a0c067...`](https://explorer-studio.genlayer.com/tx/0x88a0c06778c854b1a5a549d7b6b7919b77534b17b49d64fc2f346e433bda21fa) | submit_case FINALIZED/SUCCESS |  |
-| negative | `resolve:DS07` | [`0x86e66251...`](https://explorer-studio.genlayer.com/tx/0x86e66251e8ff13bc52758ff7cc7e3bcaae8e2562da02eaef4255a64521e033c8) | INCONCLUSIVE / SOURCE_ADDRESSES_ADJUDICATOR | held |
-| lifecycle | `file:DS08` | [`0xe184bc8c...`](https://explorer-studio.genlayer.com/tx/0xe184bc8cfaa67ca2542783163661dd677235326725cc380ffbd67025371fbf93) | submit_case FINALIZED/SUCCESS |  |
-| negative | `resolve:DS08` | [`0x05c7b28a...`](https://explorer-studio.genlayer.com/tx/0x05c7b28ab7846ba7ffc9884e5253df91f465eea9c210d4ee1e121b001bb96e13) | EVIDENCE_UNAVAILABLE / EVIDENCE_DIGEST_MISMATCH | held |
-| lifecycle | `file:DS09` | [`0xa5cae298...`](https://explorer-studio.genlayer.com/tx/0xa5cae2986e3aaeb7ff83c915326a16498cfacf3f3798546d7bf2a179ab2e03f7) | submit_case FINALIZED/SUCCESS |  |
-| negative | `resolve:DS09` | [`0x6b06a645...`](https://explorer-studio.genlayer.com/tx/0x6b06a64565708285b1f583b3a56d23a5a6353d3fb95c01667315d891cdd91abc) | EVIDENCE_UNAVAILABLE / REQUIRED_EVIDENCE_UNREADABLE | held |
-| lifecycle | `file:DS10` | [`0xdb846086...`](https://explorer-studio.genlayer.com/tx/0xdb846086216e9b441aa2975367ad82ca955fbc75f0373d49c5e68f7aeb84c71d) | submit_case FINALIZED/SUCCESS |  |
-| negative | `resolve:DS10` | [`0x0a2a5e4e...`](https://explorer-studio.genlayer.com/tx/0x0a2a5e4e9633521bea82a49b7eac09e3ae95c3089d16ec3ba3d89a8d3210230d) | INCONCLUSIVE / BYTES_NOT_BOUND | held |
-| success | `finalize:DS01` | [`0x9f1f1de3...`](https://explorer-studio.genlayer.com/tx/0x9f1f1de3a391f0572929a0fc9812ff71503ed0a494630dd0b9527803999567b6) | FINAL; is_policy_violation_confirmed confirmed=true, final=true | held |
-| success | `finalize:DS02` | [`0xf3f6d95b...`](https://explorer-studio.genlayer.com/tx/0xf3f6d95b129aeeffb073c2348afc242fe205f6462acc7f768b3c14df4f9dac91) | FINAL; is_policy_violation_confirmed confirmed=false, final=true | held |
-| lifecycle | `lapse:DS11` | [`0x7a794f11...`](https://explorer-studio.genlayer.com/tx/0x7a794f110f3843abaa6e221add30934d512caadf64845dd0eb143ed2fee6082d) | CANCELLED / LAPSED | held |
-| lifecycle | `lapse:DS09` | [`0xce30bd4b...`](https://explorer-studio.genlayer.com/tx/0xce30bd4ba1e44513aafc79dee8105dd4f656ff0f45f4baeda3ad7b0c2f3a8039) | FINAL; EVIDENCE_UNAVAILABLE / REQUIRED_EVIDENCE_UNREADABLE | held |
-| lifecycle | `refile:DS09` | [`0xa345fb5d...`](https://explorer-studio.genlayer.com/tx/0xa345fb5d1fa213a46a27332597f2f0e65f9726b6bb182943f41833d491fbac03) | a new case from the same tester: DC-000012 | held |
-| negative | `refuse:stale_policy_version` | [`0x08656bec...`](https://explorer-studio.genlayer.com/tx/0x08656bec56f7a9c433e01887a38da72da0ad47664974c14f58d5d175993bd744) | refused: policy_version is not the version this challenge judges under: 2026-09 | held |
-| negative | `refuse:policy_hash_mismatch` | [`0x98393dbc...`](https://explorer-studio.genlayer.com/tx/0x98393dbc0c5694b3ac81f00633e22df2886477b7b18cf4e3eb8e10c1764e051a) | refused: policy_sha256 does not match the challenge's policy document | held |
-| negative | `refuse:personal_identifier` | [`0xb96e798d...`](https://explorer-studio.genlayer.com/tx/0xb96e798d087ddd3d349c2ab2d643758bb1aad0fb5d08dd9310123884aa2525ac) | refused: subject_reference must not contain a long digit sequence (an account or ID number): use a synthetic reference | held |
-| negative | `refuse:email_in_summary` | [`0x651a7a5f...`](https://explorer-studio.genlayer.com/tx/0x651a7a5f8590017d8231bc87a931f661ef64aa5393334d21f524c0e0903b8cb2) | refused: input_summary must not contain an email address: use a synthetic reference | held |
-| negative | `refuse:outside_domains` | [`0xab8d53fd...`](https://explorer-studio.genlayer.com/tx/0xab8d53fda602ecad36777c5d0f05bc89122b2ea2971e1df2bb8ea4b7b5fd1298) | refused: evidence[0] host is outside the challenge's evidence domains | held |
-| negative | `refuse:explanation_addresses_adjudicator` | [`0xdc8b2494...`](https://explorer-studio.genlayer.com/tx/0xdc8b24940ce96b3ad4523b16e4f87397a1738491ca6dee5eb9f5649728f1579b) | refused: decision_explanation must not contain instructions to the evaluator or hidden text | held |
-| negative | `refuse:second_case_same_tester` | [`0x3026a2b1...`](https://explorer-studio.genlayer.com/tx/0x3026a2b1229ac09f0a89eaf126032d5d1f7942e7a50e9f402a51193e30319197) | refused: this account already filed DC-000004 against this challenge | held |
-| negative | `refuse:cancel_with_cases` | [`0x4a2cf5d7...`](https://explorer-studio.genlayer.com/tx/0x4a2cf5d771f4307e1ac68515b5552528118e9ac3d05bc90c769b3e43d80d485a) | refused: this challenge already has cases and cannot be cancelled; it closes at its deadline | held |
-| negative | `refuse:double_resolution` | [`0x11c6721c...`](https://explorer-studio.genlayer.com/tx/0x11c6721c6c64263363d6b5a10c50bb78037460698d162bfb927c7c806924548f) | refused: only a PENDING case is resolved | held |
-| negative | `refuse:stranger_contest` | [`0x2fa3cfb2...`](https://explorer-studio.genlayer.com/tx/0x2fa3cfb28041ff0f8f58f448cf9055172c14b6b05cf6b772199991bceed71c2f) | refused: only the tester or the challenge's publisher contests a verdict | held |
-| negative | `refuse:stranger_withdraw` | [`0x2f544bd7...`](https://explorer-studio.genlayer.com/tx/0x2f544bd79896541eda251e150ad312ce778c99f61343cd7196c3e14edb4f3a4f) | refused: only the tester withdraws their own case | held |
+| lifecycle | `challenge:credit-line` | [`0x6131139b...`](https://explorer-studio.genlayer.com/tx/0x6131139b3ab5063f573fb703088b027ac5a02312f7210c5713e50a9b958a94c8) | publish_challenge FINALIZED/SUCCESS |  |
+| lifecycle | `file:DS11` | [`0xfa746da0...`](https://explorer-studio.genlayer.com/tx/0xfa746da09a0d3b215d6495cc599af281a4e1ffb879db4501126e5cc6cb32d7e2) | submit_case FINALIZED/SUCCESS |  |
+| lifecycle | `file:DS01` | [`0xc57ebb45...`](https://explorer-studio.genlayer.com/tx/0xc57ebb4510c0718c1fb89ed3452841bdfba9ab42d53dd3775321d6bb0aa111bc) | submit_case FINALIZED/SUCCESS |  |
+| success | `resolve:DS01` | [`0x916aae0a...`](https://explorer-studio.genlayer.com/tx/0x916aae0ac6f787c1fd557639c060f934e5bfbe7cbc57e2377e5a136c04754e4b) | POLICY_VIOLATION_CONFIRMED / VIOLATION_CONDITION_MET | held |
+| lifecycle | `contest:DS01` | [`0x55796b77...`](https://explorer-studio.genlayer.com/tx/0x55796b77e05f1c1e2364fe67a7363fc1cb2b8a5a052c31d623d10f7fc41c68f0) | POLICY_VIOLATION_CONFIRMED / VIOLATION_CONDITION_MET | held |
+| lifecycle | `file:DS02` | [`0x6c39448f...`](https://explorer-studio.genlayer.com/tx/0x6c39448f962b61e01fe724e63305c102ee2ddda8b75046dc84535fc13458a7b0) | submit_case FINALIZED/SUCCESS |  |
+| success | `resolve:DS02` | [`0xafc5620c...`](https://explorer-studio.genlayer.com/tx/0xafc5620c28f6e892d0153790efc5a0ca61e6691b9d738219188501922823fe9a) | POLICY_COMPLIANT / RULE_FOLLOWED | held |
+| lifecycle | `file:DS03` | [`0x59cb29d6...`](https://explorer-studio.genlayer.com/tx/0x59cb29d6d19cf20e87e54eaa957898bd74bbaea3ee19a3232d6c4e59e3e2cc49) | submit_case FINALIZED/SUCCESS |  |
+| negative | `resolve:DS03` | [`0x6c222bba...`](https://explorer-studio.genlayer.com/tx/0x6c222bbaa02e3338fcd44b957087544e1280ab6854a47e531e46d10022a5a7a1) | INCONCLUSIVE / DECISION_NOT_RECORDED | held |
+| lifecycle | `file:DS04` | [`0xb0fed237...`](https://explorer-studio.genlayer.com/tx/0xb0fed2378b6515864a52042fe58389f931c5e3db9b8684308831004316d32ac9) | submit_case FINALIZED/SUCCESS |  |
+| success | `resolve:DS04` | [`0x66422db6...`](https://explorer-studio.genlayer.com/tx/0x66422db60f51ac35e350a737484474063d4f06832a41d80fcfdaa9d1c53bd461) | POLICY_VIOLATION_CONFIRMED / VIOLATION_CONDITION_MET | held |
+| lifecycle | `file:DS05` | [`0x3994b0d2...`](https://explorer-studio.genlayer.com/tx/0x3994b0d224a41f6e6fa742c859083cc1569aa1ae2af715657198e01f0a0d8f66) | submit_case FINALIZED/SUCCESS |  |
+| negative | `resolve:DS05` | [`0xe30bfc4a...`](https://explorer-studio.genlayer.com/tx/0xe30bfc4a3a39c99ed32e3b2f3ec96cee5391e343a14d67a52bf3df3e582e1935) | INCONCLUSIVE / CRITERIA_CONFLICT | held |
+| lifecycle | `file:DS06` | [`0xbb7eb34a...`](https://explorer-studio.genlayer.com/tx/0xbb7eb34a6ff88050c487bbddd288056b528bad981b40ef6178521cc11e03fadb) | submit_case FINALIZED/SUCCESS |  |
+| negative | `resolve:DS06` | [`0xaa862d1b...`](https://explorer-studio.genlayer.com/tx/0xaa862d1bbbd77e7c8191826aaf44a00a69193ba8eaaf41d74ed3e08bd74d4474) | INCONCLUSIVE / EVIDENCE_CONTRADICTORY | held |
+| lifecycle | `file:DS07` | [`0xf73c7176...`](https://explorer-studio.genlayer.com/tx/0xf73c71764c73fd9f984091e2e44d42bb8c055513df164c91ff2b5fcb23af7570) | submit_case FINALIZED/SUCCESS |  |
+| negative | `resolve:DS07` | [`0xd684054f...`](https://explorer-studio.genlayer.com/tx/0xd684054f4a4afacb5562b21116284e8e13ecc753dbb690acfcf6f6cb9e9655a0) | INCONCLUSIVE / SOURCE_ADDRESSES_ADJUDICATOR | held |
+| lifecycle | `file:DS08` | [`0xa6647341...`](https://explorer-studio.genlayer.com/tx/0xa66473413584514c7eb5406149da1190eac5f716902fea5362e97e38ccb65db5) | submit_case FINALIZED/SUCCESS |  |
+| negative | `resolve:DS08` | [`0x7d766450...`](https://explorer-studio.genlayer.com/tx/0x7d7664504be86cc888d435dc26a6663ba2742ed6ffd2681051975e89abd256e3) | EVIDENCE_UNAVAILABLE / EVIDENCE_DIGEST_MISMATCH | held |
+| lifecycle | `file:DS09` | [`0x01fc2d05...`](https://explorer-studio.genlayer.com/tx/0x01fc2d058efb78667b686ab7692ee508406c8cb1c3fd9a0348367d36cfa06d6b) | submit_case FINALIZED/SUCCESS |  |
+| negative | `resolve:DS09` | [`0xa0f16ef5...`](https://explorer-studio.genlayer.com/tx/0xa0f16ef550b6097ae583a8903c1e84acd13c2ee230abadb53043864050b61a94) | EVIDENCE_UNAVAILABLE / REQUIRED_EVIDENCE_UNREADABLE | held |
+| success | `finalize:DS01` | [`0xd4284979...`](https://explorer-studio.genlayer.com/tx/0xd4284979258a90abbc38c3b2ef119a57b4268a81615d16c87199e1aa333a9a85) | FINAL; is_policy_violation_confirmed confirmed=true, final=true | held |
+| success | `finalize:DS02` | [`0xa7bd02c0...`](https://explorer-studio.genlayer.com/tx/0xa7bd02c0fc582ceb2dc5589ad9d40f4a885a270be1ed8e78f61cf5fe9bd1b6cc) | FINAL; is_policy_violation_confirmed confirmed=false, final=true | held |
+| lifecycle | `lapse:DS11` | [`0x9dcef1cf...`](https://explorer-studio.genlayer.com/tx/0x9dcef1cf6f153acc31e9352e7e4aeb20c139c2316448c9d1fed27f470708bc87) | CANCELLED / LAPSED | held |
+| lifecycle | `lapse:DS09` | [`0x207a178d...`](https://explorer-studio.genlayer.com/tx/0x207a178df5b43f651141d7bc673c09dae4a0bc56c7202402c704588663154b4b) | FINAL; EVIDENCE_UNAVAILABLE / REQUIRED_EVIDENCE_UNREADABLE | held |
+| lifecycle | `refile:DS09` | [`0x1d888649...`](https://explorer-studio.genlayer.com/tx/0x1d8886492c583846f7efe59e029baa1b62950c9dfe6915418d609043ceeb934b) | a new case from the same tester: DC-000022 | held |
+| negative | `refuse:stale_policy_version` | [`0xf7096df1...`](https://explorer-studio.genlayer.com/tx/0xf7096df1a92cafd94218df6aa064725546d099fd2817f45110e546a74ec6d608) | refused: policy_version is not the version this challenge judges under: 2026-09 | held |
+| negative | `refuse:policy_hash_mismatch` | [`0x35785540...`](https://explorer-studio.genlayer.com/tx/0x357855402f17deb3835151dadd4a93f29313054e37ba0b27885aea3d3d15b557) | refused: policy_sha256 does not match the challenge's policy document | held |
+| negative | `refuse:personal_identifier` | [`0x12fe5177...`](https://explorer-studio.genlayer.com/tx/0x12fe5177974889684ca877cd33f0ce1b1145a36bac97752475b4c9c5300d6907) | refused: subject_reference must not contain a long digit sequence (an account or ID number): use a synthetic reference | held |
+| negative | `refuse:email_in_summary` | [`0x25dc9a1d...`](https://explorer-studio.genlayer.com/tx/0x25dc9a1dbbfa08de3351021fc6330ff397538634b03eb590242a8c2bd6d796a1) | refused: input_summary must not contain an email address: use a synthetic reference | held |
+| negative | `refuse:outside_domains` | [`0x16cee546...`](https://explorer-studio.genlayer.com/tx/0x16cee54635ee2b2ad33733d7e2cc32d93fabb65eb8cfd7fbad053e055aa24ba9) | refused: evidence[0] host is outside the challenge's evidence domains | held |
+| negative | `refuse:explanation_addresses_adjudicator` | [`0xf205d405...`](https://explorer-studio.genlayer.com/tx/0xf205d4057bcd52c21d9db16edf978db0f7f2fa24432e1659ed77dbf173485000) | refused: decision_explanation must not contain instructions to the evaluator or hidden text | held |
+| negative | `refuse:unpinned_evidence` | [`0x0ad939a2...`](https://explorer-studio.genlayer.com/tx/0x0ad939a2a0bc913c4626e4186775ff91813b613d65c07213be5fbcf62a8154d9) | refused: evidence[0] kind must be one of: PINNED | held |
+| negative | `refuse:second_case_same_tester` | [`0x32e3998c...`](https://explorer-studio.genlayer.com/tx/0x32e3998c62b8ff837af86622e845d8de5eba4148a0e20e0be48fc844f679a067) | refused: this account already filed DC-000015 against this challenge | held |
+| negative | `refuse:cancel_with_cases` | [`0x36e7bf4c...`](https://explorer-studio.genlayer.com/tx/0x36e7bf4cf6a0ad432c7e45686ceec11645c87ffc98d21612a72f156af337f518) | refused: this challenge already has cases and cannot be cancelled; it closes at its deadline | held |
+| negative | `refuse:double_resolution` | [`0xbcb2838e...`](https://explorer-studio.genlayer.com/tx/0xbcb2838e64acb111287988fd9ce9598a396cc5a98c534a893e41d8d9618b8413) | refused: only a PENDING case is resolved | held |
+| negative | `refuse:stranger_contest` | [`0xa46836ee...`](https://explorer-studio.genlayer.com/tx/0xa46836eedf86ad27911aaf6c28e9b836e4efd53fac00c7df7a14fd8b6c461156) | refused: only the tester or the challenge's publisher contests a verdict | held |
+| negative | `refuse:stranger_withdraw` | [`0x8807d451...`](https://explorer-studio.genlayer.com/tx/0x8807d4518466528e47fbaf14ad35cb8e8d06bfb93ae1a7a6b69fef3ec31fa702) | refused: only the tester withdraws their own case | held |
 
 ## Mutation sweeps
 
@@ -160,7 +171,8 @@ lapse; and eleven refusals, each for the reason it was sent to test.
 | `deploy/mutation_sweep_first.txt` - the first sweep, on v0.1.0, before the tests it asked for | 85 mutations, 80 killed, 5 survived |
 | `deploy/mutation_sweep_v1.txt` - v0.1.0 and its final suite | 85 mutations, 85 killed, 0 survived |
 | `deploy/mutation_sweep_v2_first.txt` - the first sweep of v0.2.1 | 110 mutations, 109 killed, 1 survived |
-| `deploy/mutation_sweep.txt` - the sweep of record, on the canonical v0.2.1 contract and the final suite | 110 mutations, **110 killed, 0 survived** |
+| `deploy/mutation_sweep_v021.txt` - v0.2.1 and its final suite | 110 mutations, 110 killed, 0 survived |
+| `deploy/mutation_sweep.txt` - the sweep of record, on the canonical v0.4.1 contract and the final suite | 166 mutations, **166 killed, 0 survived** |
 
 Every survivor of the first sweep was a gap in the tests, and each now has the
 test that kills it: a prohibited factor, and separately a contradicted
@@ -168,10 +180,10 @@ explanation, beside an unmet violation condition must not read as compliance
 (both are `CRITERIA_CONFLICT`); an IP literal is refused as an evidence host; a
 case cannot be filed against a cancelled challenge; and the record of a `LIVE`
 item keeps only its status, never a digest or byte count that validators did not
-compare. The 25 mutations added since v0.1.0 each break one fix from the
-adversarial review or the fifth pass, and each is killed by the test written for
-that fix in `tests/direct/test_ds_review.py`. The one survivor of the first
-v0.2.1 sweep was an older test the new two-item rule had quietly disarmed: it
-quoted the explanation alone, which the new rule refuses for a second reason,
-so the mutation it was written to catch no longer changed its outcome. It now
-quotes the explanation beside a real item.
+compare. The mutations added since v0.1.0 each break one fix from an
+adversarial review or a diagnostic pass, and each is killed by the test written
+for that fix (`tests/direct/test_ds_review.py` and the three files after it). The
+one survivor of the first v0.2.1 sweep was an older test the new two-item rule
+had quietly disarmed: it quoted the explanation alone, which the new rule refuses
+for a second reason, so the mutation it was written to catch no longer changed
+its outcome. It now quotes the explanation beside a real item.

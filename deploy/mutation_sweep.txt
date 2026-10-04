@@ -1,0 +1,339 @@
+166 mutations, 0 anchor problems
+accept-control: unmodified copy must pass ...
+control green; 166 mutations over 4 job(s)
+
+  [1/166] killed  : a 404 is a generic failure
+  [2/166] killed  : a forbidden document is a generic failure
+  [3/166] killed  : a redirect is read as a retrieved document
+  [4/166] killed  : an undecodable body is read
+  [5/166] killed  : a digest mismatch is judged by the panel anyway
+  [6/166] killed  : a pinned item's bytes are not checked against the declared digest
+  [7/166] killed  : an unreadable policy is judged anyway
+  [8/166] killed  : an oversized document is not marked partial
+  [9/166] killed  : a document addressing the adjudicator is judged anyway
+  [10/166] killed  : text in the visible body is not scanned
+  [11/166] killed  : markup and attributes are not scanned
+  [12/166] killed  : a finding may be quoted from the explanation
+  [13/166] killed  : the title is not scanned
+  [14/166] killed  : a required role that cannot be read is judged anyway
+  [15/166] killed  : a false explanation counts as contradictory evidence
+  [16/166] killed  : the decision may be read from any item
+  [17/166] killed  : an assertion about the case needs no quote
+  [18/166] killed  : the gate lets a reading quote any item
+  [19/166] killed  : a spliced quote is accepted when the panel answers
+  [20/166] killed  : a quote need not ground in the text this node retrieved
+  [21/166] killed  : prohibited factors are asked about when none are declared
+  [22/166] killed  : a code reason about evidence is not EVIDENCE_UNAVAILABLE
+  [23/166] killed  : a spliced quote passes the gate
+  [24/166] killed  : a code reason is overridden by the panel's reading
+  [25/166] killed  : an unusable panel answer reaches a verdict
+  [26/166] killed  : contradictory evidence reaches a verdict
+  [27/166] killed  : unclear consistency reaches a verdict
+  [28/166] killed  : a decision the output does not record is judged anyway
+  [29/166] killed  : an unclear decision is judged anyway
+  [30/166] killed  : a violation needs no bound bytes
+  [31/166] killed  : an unclear violation falls through to compliance
+  [32/166] killed  : a broken rule beside an unmet violation is compliance
+  [33/166] killed  : a prohibited factor beside an unmet violation is compliance
+  [34/166] killed  : a contradicted explanation beside an unmet violation is compliance
+  [35/166] killed  : an unclear criterion is compliance
+  [36/166] killed  : a live item counts as bound
+  [37/166] killed  : compliance needs no bound bytes
+  [38/166] killed  : the severity is not the challenge's
+  [39/166] killed  : the consequence is not compared
+  [40/166] killed  : a positive verdict's criteria are not compared
+  [41/166] killed  : the leader's payload is gated against its own text, not this node's
+  [42/166] killed  : a transient failure ratifies a different failure
+  [43/166] killed  : a payload about another case is accepted
+  [44/166] killed  : the policy may come from any host
+  [45/166] killed  : the policy need not be bound
+  [46/166] killed  : the model output need not be required
+  [47/166] killed  : prohibited factors may repeat
+  [48/166] killed  : the severity may be anything
+  [49/166] killed  : the windows are unbounded
+  [50/166] killed  : challenge text may address the adjudicator
+  [51/166] killed  : a challenge may close in the past
+  [52/166] killed  : free text is scanned as written, not in the scan form
+  [53/166] killed  : an IP literal is a host
+  [54/166] killed  : an email address passes the privacy guard
+  [55/166] killed  : a long digit run passes the privacy guard
+  [56/166] killed  : a space continues a digit run
+  [57/166] killed  : free text skips the privacy guard
+  [58/166] killed  : a pinned item needs no digest
+  [59/166] killed  : an item may claim the policy role
+  [60/166] killed  : an item may come from any host
+  [61/166] killed  : the same document may be declared twice
+  [62/166] killed  : a required role may be missing at filing
+  [63/166] killed  : a stale policy version is accepted
+  [64/166] killed  : the evidence list is unbounded
+  [65/166] killed  : a policy hash mismatch is accepted
+  [66/166] killed  : the challenge hash is not checked
+  [67/166] killed  : a case may be filed after the deadline
+  [68/166] killed  : a case may be filed against a cancelled challenge
+  [69/166] killed  : one tester may file twice
+  [70/166] killed  : the claimed violation may be anything
+  [71/166] killed  : a withdrawn case blocks filing again
+  [72/166] killed  : the open-case cap does not hold
+  [73/166] killed  : an outage made final blocks filing again
+  [74/166] killed  : a case may be resolved after its window
+  [75/166] killed  : a case may be resolved twice
+  [76/166] killed  : a party may contest twice
+  [77/166] killed  : a stranger may contest
+  [78/166] killed  : anyone may withdraw a case
+  [79/166] killed  : a verdict may be contested after its window
+  [80/166] killed  : a verdict may be final inside its contest window
+  [81/166] killed  : a case may lapse while its window is open
+  [82/166] killed  : a challenge with cases may be cancelled
+  [83/166] killed  : anyone may cancel a challenge
+  [84/166] killed  : every reading is marked compared
+  [85/166] killed  : the violation count is not corrected when a contest overturns
+  [86/166] killed  : an unavailable resolve ends the case
+  [87/166] killed  : an unavailable contest spends the contest
+  [88/166] killed  : an unavailable contest replaces the verdict
+  [89/166] killed  : an outage through the window is cancelled, not final
+  [90/166] killed  : the effective status of an outage is cancelled
+  [91/166] killed  : the verdict view follows the latest round, applied or not
+  [92/166] killed  : a quote may add a minus sign
+  [93/166] killed  : criteria nobody compared are served
+  [94/166] killed  : a quote may add a comparison
+  [95/166] killed  : a decimal point splits a number
+  [96/166] killed  : fullwidth forms are not folded
+  [97/166] killed  : lookalike letters are not folded
+  [98/166] killed  : prohibited factors skip the privacy guard
+  [99/166] killed  : JSON escapes are not decoded for the scan
+  [100/166] killed  : an evidence URL may carry an email address
+  [101/166] killed  : one item may contradict itself
+  [102/166] killed  : two items may declare the same bytes
+  [103/166] killed  : an unpinned item is exempt when labelled an explanation
+  [104/166] killed  : a domain may carry a path or port
+  [105/166] killed  : a note may carry an identifier or a marker
+  [106/166] killed  : the panel is not told a wrong decision is not a contradiction
+  [107/166] killed  : grouped digits pass the privacy guard
+  [108/166] killed  : one unreadable pinned item is skipped
+  [109/166] killed  : a truncated item carries a violation
+  [110/166] killed  : resolve rounds are uncapped
+  [111/166] killed  : a truncated item carries compliance
+  [112/166] killed  : anyone may spend the retries
+  [113/166] killed  : contest rounds are uncapped
+  [114/166] killed  : a contest round does not restart the window
+  [115/166] killed  : the publisher's contests use up the tester's
+  [116/166] killed  : a withdrawal keeps what a round wrote
+  [117/166] killed  : a case may be withdrawn after its window
+  [118/166] killed  : a bare less-than opens a tag
+  [119/166] killed  : a > inside a quoted attribute ends the tag
+  [120/166] killed  : --!> does not close a comment
+  [121/166] killed  : an empty comment swallows what follows
+  [122/166] killed  : JSON that mentions a tag is HTML
+  [123/166] killed  : markup offsets come from full lowercasing
+  [124/166] killed  : a lone surrogate is stored
+  [125/166] killed  : a quote may carry a surrogate or an identifier past the gate
+  [126/166] killed  : a quote carrying an identifier is stored
+  [127/166] killed  : a marker matches inside a longer word
+  [128/166] killed  : tag characters are not read
+  [129/166] killed  : mathematical letters are not folded
+  [130/166] killed  : blank letters are kept
+  [131/166] killed  : the answer shape is not a marker
+  [132/166] killed  : entities are decoded one layer deep
+  [133/166] killed  : a field named like a subject is a marker
+  [134/166] killed  : ordinary policy language is a marker
+  [135/166] killed  : a pending case has no criteria keys
+  [136/166] killed  : a malformed as_of reads as a missing case
+  [137/166] killed  : a typographic minus is not a sign
+  [138/166] killed  : an unpinned item may be filed
+  [139/166] killed  : the record does not say what the leader chose
+  [140/166] killed  : a conflicting-evidence claim is refused
+  [141/166] killed  : one party's contest spends the other's
+  [142/166] killed  : a composed comparison sign is dropped
+  [143/166] killed  : a quote is screened as strictly as written text
+  [144/166] killed  : a spaced card number passes in written text
+  [145/166] killed  : any quote in a tag opens an attribute value
+  [146/166] killed  : underscores do not separate marker words
+  [147/166] killed  : verdict markers are matched on split words
+  [148/166] killed  : a hyphenated line wrap hides a word
+  [149/166] killed  : entities are not decoded in the panel text
+  [150/166] killed  : validators compare the kind of failure
+  [151/166] killed  : a partial read is agreed to be a whole one
+  [152/166] killed  : a custom element named like a raw one is dropped
+  [153/166] killed  : an overlong character reference reaches the decoder
+  [154/166] killed  : a title and fallback content are body text
+  [155/166] killed  : a content type is stored as the host sent it
+  [156/166] killed  : a soft hyphen stays in the panel text
+  [157/166] killed  : a JSON record's escapes are read as written
+  [158/166] killed  : the gate accepts any content type
+  [159/166] killed  : a page with a prolog is read as raw markup
+  [160/166] killed  : a thousands separator splits a number
+  [161/166] killed  : a leading decimal point is dropped
+  [162/166] killed  : a quote may drop the sign before its first number
+  [163/166] killed  : four years in a row are a card number
+  [164/166] killed  : one wallet in both roles is shown two contests
+  [165/166] killed  : a timestamp in a quote is an identifier
+  [166/166] killed  : the markers are not published
+
+killed:   a redirect is read as a retrieved document
+killed:   a 404 is a generic failure
+killed:   a forbidden document is a generic failure
+killed:   an undecodable body is read
+killed:   an oversized document is not marked partial
+killed:   a pinned item's bytes are not checked against the declared digest
+killed:   a digest mismatch is judged by the panel anyway
+killed:   an unreadable policy is judged anyway
+killed:   a required role that cannot be read is judged anyway
+killed:   a document addressing the adjudicator is judged anyway
+killed:   text in the visible body is not scanned
+killed:   markup and attributes are not scanned
+killed:   the title is not scanned
+killed:   a finding may be quoted from the explanation
+killed:   a false explanation counts as contradictory evidence
+killed:   the decision may be read from any item
+killed:   the gate lets a reading quote any item
+killed:   an assertion about the case needs no quote
+killed:   a spliced quote is accepted when the panel answers
+killed:   a spliced quote passes the gate
+killed:   a quote need not ground in the text this node retrieved
+killed:   prohibited factors are asked about when none are declared
+killed:   a code reason about evidence is not EVIDENCE_UNAVAILABLE
+killed:   a code reason is overridden by the panel's reading
+killed:   an unusable panel answer reaches a verdict
+killed:   contradictory evidence reaches a verdict
+killed:   unclear consistency reaches a verdict
+killed:   a decision the output does not record is judged anyway
+killed:   an unclear decision is judged anyway
+killed:   a violation needs no bound bytes
+killed:   an unclear violation falls through to compliance
+killed:   a broken rule beside an unmet violation is compliance
+killed:   a prohibited factor beside an unmet violation is compliance
+killed:   a contradicted explanation beside an unmet violation is compliance
+killed:   an unclear criterion is compliance
+killed:   compliance needs no bound bytes
+killed:   a live item counts as bound
+killed:   the severity is not the challenge's
+killed:   the consequence is not compared
+killed:   a positive verdict's criteria are not compared
+killed:   the leader's payload is gated against its own text, not this node's
+killed:   a transient failure ratifies a different failure
+killed:   a payload about another case is accepted
+killed:   the policy may come from any host
+killed:   the policy need not be bound
+killed:   the model output need not be required
+killed:   prohibited factors may repeat
+killed:   the severity may be anything
+killed:   the windows are unbounded
+killed:   a challenge may close in the past
+killed:   challenge text may address the adjudicator
+killed:   free text is scanned as written, not in the scan form
+killed:   an IP literal is a host
+killed:   an email address passes the privacy guard
+killed:   a long digit run passes the privacy guard
+killed:   a space continues a digit run
+killed:   free text skips the privacy guard
+killed:   a pinned item needs no digest
+killed:   an item may claim the policy role
+killed:   an item may come from any host
+killed:   the same document may be declared twice
+killed:   a required role may be missing at filing
+killed:   the evidence list is unbounded
+killed:   a stale policy version is accepted
+killed:   a policy hash mismatch is accepted
+killed:   the challenge hash is not checked
+killed:   a case may be filed after the deadline
+killed:   a case may be filed against a cancelled challenge
+killed:   the claimed violation may be anything
+killed:   one tester may file twice
+killed:   a withdrawn case blocks filing again
+killed:   an outage made final blocks filing again
+killed:   the open-case cap does not hold
+killed:   a case may be resolved twice
+killed:   a case may be resolved after its window
+killed:   a party may contest twice
+killed:   a stranger may contest
+killed:   a verdict may be contested after its window
+killed:   a verdict may be final inside its contest window
+killed:   a case may lapse while its window is open
+killed:   anyone may withdraw a case
+killed:   a challenge with cases may be cancelled
+killed:   anyone may cancel a challenge
+killed:   every reading is marked compared
+killed:   the violation count is not corrected when a contest overturns
+killed:   an unavailable resolve ends the case
+killed:   an unavailable contest spends the contest
+killed:   an unavailable contest replaces the verdict
+killed:   an outage through the window is cancelled, not final
+killed:   the effective status of an outage is cancelled
+killed:   the verdict view follows the latest round, applied or not
+killed:   criteria nobody compared are served
+killed:   a quote may add a minus sign
+killed:   a quote may add a comparison
+killed:   a decimal point splits a number
+killed:   fullwidth forms are not folded
+killed:   lookalike letters are not folded
+killed:   JSON escapes are not decoded for the scan
+killed:   prohibited factors skip the privacy guard
+killed:   an evidence URL may carry an email address
+killed:   two items may declare the same bytes
+killed:   a domain may carry a path or port
+killed:   one item may contradict itself
+killed:   the panel is not told a wrong decision is not a contradiction
+killed:   a note may carry an identifier or a marker
+killed:   an unpinned item is exempt when labelled an explanation
+killed:   grouped digits pass the privacy guard
+killed:   one unreadable pinned item is skipped
+killed:   a truncated item carries a violation
+killed:   a truncated item carries compliance
+killed:   resolve rounds are uncapped
+killed:   anyone may spend the retries
+killed:   contest rounds are uncapped
+killed:   a contest round does not restart the window
+killed:   the publisher's contests use up the tester's
+killed:   a withdrawal keeps what a round wrote
+killed:   a case may be withdrawn after its window
+killed:   a bare less-than opens a tag
+killed:   a > inside a quoted attribute ends the tag
+killed:   an empty comment swallows what follows
+killed:   --!> does not close a comment
+killed:   markup offsets come from full lowercasing
+killed:   JSON that mentions a tag is HTML
+killed:   a lone surrogate is stored
+killed:   a quote may carry a surrogate or an identifier past the gate
+killed:   a quote carrying an identifier is stored
+killed:   a marker matches inside a longer word
+killed:   tag characters are not read
+killed:   mathematical letters are not folded
+killed:   blank letters are kept
+killed:   entities are decoded one layer deep
+killed:   the answer shape is not a marker
+killed:   a field named like a subject is a marker
+killed:   ordinary policy language is a marker
+killed:   a pending case has no criteria keys
+killed:   a malformed as_of reads as a missing case
+killed:   a typographic minus is not a sign
+killed:   the record does not say what the leader chose
+killed:   a conflicting-evidence claim is refused
+killed:   an unpinned item may be filed
+killed:   one party's contest spends the other's
+killed:   a composed comparison sign is dropped
+killed:   a quote is screened as strictly as written text
+killed:   a spaced card number passes in written text
+killed:   any quote in a tag opens an attribute value
+killed:   underscores do not separate marker words
+killed:   verdict markers are matched on split words
+killed:   a hyphenated line wrap hides a word
+killed:   validators compare the kind of failure
+killed:   a partial read is agreed to be a whole one
+killed:   entities are not decoded in the panel text
+killed:   a custom element named like a raw one is dropped
+killed:   a title and fallback content are body text
+killed:   a soft hyphen stays in the panel text
+killed:   an overlong character reference reaches the decoder
+killed:   a JSON record's escapes are read as written
+killed:   a content type is stored as the host sent it
+killed:   the gate accepts any content type
+killed:   a page with a prolog is read as raw markup
+killed:   a thousands separator splits a number
+killed:   a leading decimal point is dropped
+killed:   a quote may drop the sign before its first number
+killed:   four years in a row are a card number
+killed:   a timestamp in a quote is an identifier
+killed:   one wallet in both roles is shown two contests
+killed:   the markers are not published
+
+mutations: 166 killed, 0 survived, 0 anchor missing

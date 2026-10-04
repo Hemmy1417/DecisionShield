@@ -1,0 +1,113 @@
+10:52:53 contract 0x2Eeb9e62Cf44654a90cB7263eD4620b0bb3422E3 phase full
+10:52:53 phase challenges
+10:52:53   challenge:credit-line: publish_challenge as publisher
+10:53:33     FINALIZED/SUCCESS votes idle,agree,agree,agree,idle
+10:53:36     credit-line -> DS-000001
+10:53:36 phase cases
+10:53:38   file:DS11: submit_case as t11
+10:54:17     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+10:54:22   file:DS01: submit_case as t01
+10:55:01     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+10:55:04   resolve:DS01: resolve as keeper
+10:56:01     FINALIZED/SUCCESS votes agree,agree,idle,agree,idle
+10:56:02     DS01: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+10:56:02   contest:DS01: contest as publisher
+10:57:40     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+10:57:42     DS01:contest: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+10:57:43   file:DS02: submit_case as t02
+10:58:23     FINALIZED/SUCCESS votes agree,idle,agree,agree,idle
+10:58:27   resolve:DS02: resolve as keeper
+10:59:23     FINALIZED/SUCCESS votes agree,idle,idle,agree,agree
+10:59:24     DS02: POLICY_COMPLIANT/RULE_FOLLOWED HELD
+10:59:26   file:DS03: submit_case as t03
+11:00:05     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+11:00:09   resolve:DS03: resolve as keeper
+11:01:10     FINALIZED/SUCCESS votes agree,idle,agree,agree,idle
+11:01:12     DS03: INCONCLUSIVE/DECISION_NOT_RECORDED HELD
+11:01:14   file:DS04: submit_case as t04
+11:01:53     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+11:01:57   resolve:DS04: resolve as keeper
+11:04:02     FINALIZED/SUCCESS votes agree,agree,idle,idle,agree
+11:04:04     DS04: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+11:04:06   file:DS05: submit_case as t05
+11:04:51     FINALIZED/SUCCESS votes agree,agree,idle,agree,idle
+11:04:54   resolve:DS05: resolve as keeper
+11:06:16     FINALIZED/SUCCESS votes agree,agree,idle,idle,agree
+11:06:18     DS05: INCONCLUSIVE/CRITERIA_CONFLICT HELD
+11:06:19   file:DS06: submit_case as t06
+11:07:05     FINALIZED/SUCCESS votes agree,idle,agree,agree,agree
+11:07:08   resolve:DS06: resolve as keeper
+11:08:04     FINALIZED/SUCCESS votes agree,idle,idle,agree,agree
+11:08:06     DS06: INCONCLUSIVE/EVIDENCE_CONTRADICTORY HELD
+11:08:08   file:DS07: submit_case as t07
+11:08:48     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+11:08:52   resolve:DS07: resolve as keeper
+11:09:36     FINALIZED/SUCCESS votes agree,idle,agree,agree,agree
+11:09:38     DS07: INCONCLUSIVE/SOURCE_ADDRESSES_ADJUDICATOR HELD
+11:09:40   file:DS08: submit_case as t08
+11:10:25     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+11:10:29   resolve:DS08: resolve as keeper
+11:11:09     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+11:11:12     DS08: EVIDENCE_UNAVAILABLE/EVIDENCE_DIGEST_MISMATCH HELD
+11:11:14   file:DS09: submit_case as t09
+11:11:54     FINALIZED/SUCCESS votes idle,agree,agree,idle,agree
+11:11:57   resolve:DS09: resolve as keeper
+11:12:42     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+11:12:46     DS09: EVIDENCE_UNAVAILABLE/REQUIRED_EVIDENCE_UNREADABLE HELD
+11:12:46 phase settle
+11:12:47   finalize:DS01: finalize as keeper
+11:13:26     FINALIZED/SUCCESS votes agree,agree,idle,idle,agree
+11:13:29     DS01 consumer view: confirmed=True compliant=False HELD
+11:13:31   finalize:DS02: finalize as keeper
+11:14:10     FINALIZED/SUCCESS votes idle,agree,agree,idle,agree
+11:14:14     DS02 consumer view: confirmed=False compliant=True HELD
+11:14:15   waiting 570s for the resolve window of DC-000001
+11:16:15   waiting 450s for the resolve window of DC-000001
+11:18:15   waiting 330s for the resolve window of DC-000001
+11:20:15   waiting 210s for the resolve window of DC-000001
+11:22:16   waiting 89s for the resolve window of DC-000001
+11:23:46   lapse:DS11: lapse_case as keeper
+11:24:26     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+11:24:29   waiting 1013s for the resolve window of DC-000010
+11:26:29   waiting 893s for the resolve window of DC-000010
+11:28:29   waiting 773s for the resolve window of DC-000010
+11:30:29   waiting 653s for the resolve window of DC-000010
+11:32:29   waiting 533s for the resolve window of DC-000010
+11:34:30   waiting 413s for the resolve window of DC-000010
+11:36:30   waiting 292s for the resolve window of DC-000010
+11:38:30   waiting 172s for the resolve window of DC-000010
+11:40:30   waiting 52s for the resolve window of DC-000010
+11:41:23   lapse:DS09: lapse_case as keeper
+11:42:05     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+11:42:07     DS09 after its window: EVIDENCE_UNAVAILABLE final=True HELD
+11:42:09   refile:DS09: submit_case as t09
+11:42:48     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+11:42:52     DS09 filed again as DC-000011 HELD
+11:42:54   stats: {"challenges": 1, "resolutions": 10, "submissions": 11, "violations_confirmed": 2}
+11:42:54 phase refusals
+11:42:56   refuse:stale_policy_version: expecting a refusal of submit_case
+11:43:41     refused
+11:43:41   refuse:policy_hash_mismatch: expecting a refusal of submit_case
+11:44:27     refused
+11:44:27   refuse:personal_identifier: expecting a refusal of submit_case
+11:45:06     refused
+11:45:06   refuse:email_in_summary: expecting a refusal of submit_case
+11:45:45     refused
+11:45:45   refuse:outside_domains: expecting a refusal of submit_case
+11:46:30     refused
+11:46:30   refuse:explanation_addresses_adjudicator: expecting a refusal of submit_case
+11:47:08     refused
+11:47:09   refuse:unpinned_evidence: expecting a refusal of submit_case
+11:47:54     refused
+11:47:54   refuse:second_case_same_tester: expecting a refusal of submit_case
+11:48:33     refused
+11:48:33   refuse:cancel_with_cases: expecting a refusal of cancel_challenge
+11:49:13     refused
+11:49:13   refuse:double_resolution: expecting a refusal of resolve
+11:49:52     refused
+11:49:52   refuse:stranger_contest: expecting a refusal of contest
+11:50:31     refused
+11:50:31   refuse:stranger_withdraw: expecting a refusal of withdraw_case
+    rpc transient on eth_getTransactionByHash (1/8): eth_getTransactionByHash returned invalid JSON: Expecting value: line 1 column 1 (char 0).; retry in 5s
+11:51:10     refused
+11:51:10 summary {"steps": 38, "transactions": 38, "outcomes_checked": 15, "outcomes_held": 15, "missed": [], "refusals": 12, "refusals_held": 12}

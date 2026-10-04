@@ -1,0 +1,163 @@
+02:53:50 contract 0x2Eeb9e62Cf44654a90cB7263eD4620b0bb3422E3 phase full
+02:53:50 phase challenges
+02:53:50   challenge:credit-line: publish_challenge as publisher
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+02:54:34     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+02:54:37     credit-line -> DS-000002
+02:54:37 phase cases
+02:54:39   file:DS11: submit_case as t11
+    rpc transient on eth_getTransactionReceipt (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+02:55:16     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+02:55:21   file:DS01: submit_case as t01
+02:55:59     FINALIZED/SUCCESS votes agree,agree,idle,idle,agree
+02:56:02   resolve:DS01: resolve as keeper
+02:56:56     FINALIZED/SUCCESS votes agree,idle,idle,agree,agree
+02:56:58     DS01: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+02:56:58   contest:DS01: contest as publisher
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: ('Connection aborted.', RemoteDisconnec; retry in 5s
+02:57:51     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+02:57:53     DS01:contest: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+    rpc transient on gen_call (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+02:58:00   file:DS02: submit_case as t02
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: ('Connection aborted.', RemoteDisconnec; retry in 5s
+02:58:44     FINALIZED/SUCCESS votes agree,idle,idle,agree,agree
+02:58:48   resolve:DS02: resolve as keeper
+03:00:05     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+03:00:07     DS02: POLICY_COMPLIANT/RULE_FOLLOWED HELD
+03:00:08   file:DS03: submit_case as t03
+    rpc transient on sim_getConsensusContract (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+    rpc transient on eth_sendRawTransaction (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:01:08     FINALIZED/SUCCESS votes agree,idle,agree,agree,idle
+03:01:11   resolve:DS03: resolve as keeper
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: ('Connection aborted.', RemoteDisconnec; retry in 5s
+03:02:10     FINALIZED/SUCCESS votes idle,agree,agree,idle,agree
+03:02:12     DS03: INCONCLUSIVE/DECISION_NOT_RECORDED HELD
+03:02:14   file:DS04: submit_case as t04
+03:02:52     FINALIZED/SUCCESS votes idle,agree,idle,agree,agree
+03:02:55   resolve:DS04: resolve as keeper
+    rpc transient on eth_sendRawTransaction (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+    rpc transient on eth_getTransactionByHash (2/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 10s
+03:04:11     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+03:04:12     DS04: POLICY_VIOLATION_CONFIRMED/VIOLATION_CONDITION_MET HELD
+03:04:14   file:DS05: submit_case as t05
+03:04:51     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+03:04:54   resolve:DS05: resolve as keeper
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:05:49     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+03:05:51     DS05: INCONCLUSIVE/CRITERIA_CONFLICT HELD
+03:05:52   file:DS06: submit_case as t06
+03:06:30     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+    rpc transient on gen_call (1/8): Request to https://studio.genlayer.com/api failed: ('Connection aborted.', RemoteDisconnec; retry in 5s
+03:06:39   resolve:DS06: resolve as keeper
+03:08:13     FINALIZED/SUCCESS votes agree,idle,idle,agree,agree
+03:08:14     DS06: INCONCLUSIVE/EVIDENCE_CONTRADICTORY HELD
+03:08:16   file:DS07: submit_case as t07
+    rpc transient on sim_getConsensusContract (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+    rpc transient on eth_estimateGas (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:09:11     FINALIZED/SUCCESS votes agree,agree,agree,agree,idle
+03:09:15   resolve:DS07: resolve as keeper
+03:09:58     FINALIZED/SUCCESS votes idle,agree,agree,idle,agree
+03:10:00     DS07: INCONCLUSIVE/SOURCE_ADDRESSES_ADJUDICATOR HELD
+03:10:02   file:DS08: submit_case as t08
+03:10:39     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+03:10:42   resolve:DS08: resolve as keeper
+03:11:25     FINALIZED/SUCCESS votes agree,agree,idle,agree,idle
+03:11:28     DS08: EVIDENCE_UNAVAILABLE/EVIDENCE_DIGEST_MISMATCH HELD
+03:11:30   file:DS09: submit_case as t09
+03:12:08     FINALIZED/SUCCESS votes agree,agree,idle,idle,agree
+    rpc transient on gen_call (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:12:16   resolve:DS09: resolve as keeper
+03:12:59     FINALIZED/SUCCESS votes idle,idle,agree,agree,agree
+03:13:03     DS09: EVIDENCE_UNAVAILABLE/REQUIRED_EVIDENCE_UNREADABLE HELD
+03:13:03 phase settle
+03:13:04   finalize:DS01: finalize as keeper
+    rpc transient on eth_getTransactionReceipt (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:13:41     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+03:13:45     DS01 consumer view: confirmed=True compliant=False HELD
+03:13:46   finalize:DS02: finalize as keeper
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:14:25     FINALIZED/ERROR votes agree,agree,agree,agree,agree
+03:14:28     DS02 consumer view: confirmed=False compliant=True MISSED
+03:14:30   waiting 616s for the resolve window of DC-000012
+03:16:30   waiting 496s for the resolve window of DC-000012
+03:18:30   waiting 376s for the resolve window of DC-000012
+03:20:30   waiting 256s for the resolve window of DC-000012
+03:22:33   waiting 133s for the resolve window of DC-000012
+03:24:33   waiting 13s for the resolve window of DC-000012
+03:24:47   lapse:DS11: lapse_case as keeper
+    rpc transient on eth_estimateGas (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:25:31     FINALIZED/SUCCESS votes agree,agree,agree,agree,agree
+03:25:35   waiting 963s for the resolve window of DC-000021
+03:27:35   waiting 843s for the resolve window of DC-000021
+03:29:35   waiting 723s for the resolve window of DC-000021
+03:31:35   waiting 603s for the resolve window of DC-000021
+03:33:35   waiting 483s for the resolve window of DC-000021
+03:35:35   waiting 363s for the resolve window of DC-000021
+03:37:35   waiting 243s for the resolve window of DC-000021
+03:39:35   waiting 123s for the resolve window of DC-000021
+03:41:35   lapse:DS09: lapse_case as keeper
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:42:20     FINALIZED/SUCCESS votes agree,idle,agree,agree,idle
+03:42:22     DS09 after its window: EVIDENCE_UNAVAILABLE final=True HELD
+03:42:24   refile:DS09: submit_case as t09
+03:43:02     FINALIZED/SUCCESS votes agree,idle,agree,idle,agree
+03:43:05     DS09 filed again as DC-000022 HELD
+03:43:07   stats: {"challenges": 2, "resolutions": 20, "submissions": 22, "violations_confirmed": 4}
+03:43:07 phase refusals
+    rpc transient on gen_call (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:43:13   refuse:stale_policy_version: expecting a refusal of submit_case
+03:43:51     refused
+03:43:51   refuse:policy_hash_mismatch: expecting a refusal of submit_case
+    rpc transient on eth_estimateGas (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:44:35     refused
+03:44:35   refuse:personal_identifier: expecting a refusal of submit_case
+    rpc transient on eth_sendRawTransaction (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+    rpc transient on eth_getTransactionReceipt (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:45:52     refused
+03:45:52   refuse:email_in_summary: expecting a refusal of submit_case
+03:46:30     refused
+03:46:30   refuse:outside_domains: expecting a refusal of submit_case
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:47:13     refused
+03:47:13   refuse:explanation_addresses_adjudicator: expecting a refusal of submit_case
+03:47:53     refused
+03:47:53   refuse:unpinned_evidence: expecting a refusal of submit_case
+03:48:36     refused
+03:48:36   refuse:second_case_same_tester: expecting a refusal of submit_case
+03:49:13     refused
+03:49:13   refuse:cancel_with_cases: expecting a refusal of cancel_challenge
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: ('Connection aborted.', RemoteDisconnec; retry in 5s
+03:49:51     refused
+03:49:51   refuse:double_resolution: expecting a refusal of resolve
+03:50:28     refused
+03:50:28   refuse:stranger_contest: expecting a refusal of contest
+03:51:05     refused
+03:51:05   refuse:stranger_withdraw: expecting a refusal of withdraw_case
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: ('Connection aborted.', RemoteDisconnec; retry in 5s
+    rpc transient on eth_getTransactionByHash (1/8): Request to https://studio.genlayer.com/api failed: ('Connection aborted.', RemoteDisconnec; retry in 5s
+03:51:49     refused
+03:51:49 summary {"steps": 38, "transactions": 38, "outcomes_checked": 15, "outcomes_held": 14, "missed": ["finalize:DS02"], "refusals": 12, "refusals_held": 12}
+03:52:25 contract 0x2Eeb9e62Cf44654a90cB7263eD4620b0bb3422E3 phase settle
+03:52:25 phase settle
+03:52:30     DS01 consumer view: confirmed=True compliant=False HELD
+03:52:35     DS02 consumer view: confirmed=False compliant=True MISSED
+    rpc transient on gen_call (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:52:46     DS09 after its window: EVIDENCE_UNAVAILABLE final=True HELD
+03:52:48   stats: {"challenges": 2, "resolutions": 20, "submissions": 22, "violations_confirmed": 4}
+03:52:48 summary {"steps": 38, "transactions": 38, "outcomes_checked": 15, "outcomes_held": 14, "missed": ["finalize:DS02"], "refusals": 12, "refusals_held": 12}
+    rpc transient on sim_getConsensusContract (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+    rpc transient on sim_getConsensusContract (1/8): Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlay; retry in 5s
+03:53:38 contract 0x2Eeb9e62Cf44654a90cB7263eD4620b0bb3422E3 phase settle
+03:53:38 phase settle
+03:53:43     DS01 consumer view: confirmed=True compliant=False HELD
+03:53:44   retry finalize:DS02 (recorded {"status": "rollback", "payload": "[EXPECTED] the contest window closes at 2026-)
+03:53:44   finalize:DS02: finalize as keeper
+03:54:22     FINALIZED/SUCCESS votes agree,agree,idle,idle,agree
+03:54:26     DS02 consumer view: confirmed=False compliant=True HELD
+03:54:32     DS09 after its window: EVIDENCE_UNAVAILABLE final=True HELD
+03:54:34   stats: {"challenges": 2, "resolutions": 20, "submissions": 22, "violations_confirmed": 4}
+03:54:34 summary {"steps": 38, "transactions": 38, "outcomes_checked": 15, "outcomes_held": 15, "missed": [], "refusals": 12, "refusals_held": 12}

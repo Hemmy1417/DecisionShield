@@ -18,15 +18,15 @@ consensus-backed results.**
 | | |
 |---|---|
 | Network | GenLayer StudioNet, chain id 61999 |
-| Contract | [`0x8E2c66279fB5Fa0Ab6867573407aeA5787Baf467`](https://explorer-studio.genlayer.com/address/0x8E2c66279fB5Fa0Ab6867573407aeA5787Baf467) |
-| Explorer | `https://explorer-studio.genlayer.com/address/0x8E2c66279fB5Fa0Ab6867573407aeA5787Baf467` |
-| Deployment tx | [`0x131cdb62f0a0203c816d2b2d96616d2066101d4d08e23913faeda7480decc262`](https://explorer-studio.genlayer.com/tx/0x131cdb62f0a0203c816d2b2d96616d2066101d4d08e23913faeda7480decc262) |
+| Contract | [`0x2Eeb9e62Cf44654a90cB7263eD4620b0bb3422E3`](https://explorer-studio.genlayer.com/address/0x2Eeb9e62Cf44654a90cB7263eD4620b0bb3422E3) |
+| Explorer | `https://explorer-studio.genlayer.com/address/0x2Eeb9e62Cf44654a90cB7263eD4620b0bb3422E3` |
+| Deployment tx | [`0x5d61744aee027560d56c42f5d0716aa225b29b35f5f15d962db2caff44fdfc48`](https://explorer-studio.genlayer.com/tx/0x5d61744aee027560d56c42f5d0716aa225b29b35f5f15d962db2caff44fdfc48) |
 | Finality / status | FINALIZED, leader execution SUCCESS |
 | Consensus result | AGREE x3, 2 validators idle |
-| Deployment source commit | `0fca5ad` |
+| Deployment source commit | `913ccdb` |
 | Current source parity | deployed source read back with `gen_getContractCode`: **byte-identical** to `contracts/decisionshield.py` on `main` |
 
-It supersedes three earlier deployments (`deploy/superseded/`) - see
+Version 0.4.1. It supersedes four earlier deployments (`deploy/superseded/`) - see
 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#how-the-live-evidence-was-reached).
 <!-- DEPLOYMENT:END -->
 
@@ -256,27 +256,28 @@ reading verdict, severity, criteria and the policy hash.
 <!-- VERIFIED:START -->
 | Check | Result |
 |---|---|
-| `python -m pytest tests/direct -q` | 139 passed |
+| `python -m pytest tests/direct -q` | 184 passed |
 | pickling of the nondeterministic closures | checked (`direct_vm.check_pickling = True`) |
 | `genvm-lint check contracts/decisionshield.py --json` (`GENVM_VERSION=v0.3.0-rc7`) | lint ok (3 checks), validation ok, 24 methods (16 view, 8 write), exit 0 |
 | `ruff check .` | clean |
 | `python scripts/generate_fixtures.py --check` | 16 fixture files regenerate byte for byte |
-| `python scripts/mutation_check.py` | 110 mutations, **110 killed, 0 survived** |
+| `python scripts/mutation_check.py` | 166 mutations, **166 killed, 0 survived** |
+| adversarial review | four read-only rounds; the fourth found nothing on the verdict path or the lifecycle |
 | `python scripts/deploy_studionet.py --verify` | deployed and repository sha256 equal, 24 schema methods |
 | `python -m pytest tests/integration -q` | 9 passed, 1 skipped (the live-write test runs only with `DS_LIVE_WRITES=1`) |
-| live run of record | 39 transactions, **16 of 16 outcomes held, 11 of 11 refusals refused** |
+| live run of record | 38 transactions, **15 of 15 outcomes held, 12 of 12 refusals refused, each for the reason it was sent to test** |
 
-Every verdict the contract can store was reached on chain against the canonical
+Every verdict the contract stores was reached on chain against the canonical
 deployment: a confirmed violation, upheld by the publisher's contest; compliance;
 a violation won by an applicant's injected note; four distinct inconclusive
 reasons; two unavailable-evidence rounds that left their cases pending, one of
 which stayed unreadable through its window, became final as unavailable and was
 filed again by the same tester; two finalized verdicts read back through
-`is_policy_violation_confirmed`; a lapse; and eleven refusals for the reasons
-they were sent to test. Every transaction is linked in
-[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#live-run-of-record).
+`is_policy_violation_confirmed`; a lapse; and 12 refusals. Every transaction is
+linked in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#live-run-of-record).
 
-The contract was then read by an adversary, and changed: see
+The contract was read by an adversary four times, and changed each time until a
+round found no way to a wrong verdict: see
 [What the adversarial review changed](DECISION.md#what-the-adversarial-review-changed).
 <!-- VERIFIED:END -->
 
@@ -295,15 +296,16 @@ python -m pytest tests/integration -q
 Then read:
 
 1. [`DECISION.md`](DECISION.md) - the specification, written before the contract,
-   and what the diagnostic passes and the adversarial review changed.
+   and what the diagnostic passes and four adversarial reviews changed.
 2. [`docs/CONSENSUS.md`](docs/CONSENSUS.md) - which evidence each reading may
    quote, and what validators compare.
 3. `contracts/decisionshield.py` - `_verdict_for`, `_quotable`, `_code_reason`,
    `_privacy_error`.
 4. [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) - every transaction of the run of
-   record, and the five passes before it.
+   record, and the seven passes before it.
 5. `tests/direct/test_ds_adversarial.py` - the brief's adversarial matrix, one
-   test at a time; `tests/direct/test_ds_review.py` - what the review found.
+   test at a time; `tests/direct/test_ds_review.py` and the three files after it -
+   what each review found.
 
 ## Licence
 

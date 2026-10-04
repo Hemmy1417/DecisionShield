@@ -171,8 +171,9 @@ versions, admission, windows, the derivation itself - is code and stays code.
 <!-- LIVE:START -->
 ## Live findings
 
-The run of record held every outcome; the five passes before it are where the
-design met real panels and a hostile reader
+The run of record held every outcome; the seven passes before it, and the four
+adversarial reviews between them, are where the design met real panels and a
+hostile reader
 ([`DEPLOYMENT.md`](DEPLOYMENT.md#how-the-live-evidence-was-reached)).
 
 **A false explanation is not contradictory evidence.** On the first deployment
@@ -202,7 +203,8 @@ decision record now lists its factor weights.
 **Unavailable evidence does not end a case.** A wrong digest and an unpublished
 decision record were each recorded as `EVIDENCE_UNAVAILABLE` with the case left
 `PENDING`. The second stayed unreadable through its window, became final as
-unavailable, and its tester filed again - all on chain.
+unavailable, and its tester filed again - all on chain. A case that declared
+unpinned evidence was refused at filing.
 
 **Manipulation aimed at the financial AI is evidence; text aimed at the panel
 stops the round.** An applicant's note telling the model to ignore its rules,
@@ -210,10 +212,18 @@ followed by an approval at a 58 percent ratio, was confirmed as a violation. A
 record carrying a line addressed to the adjudicator was decided in code as
 `SOURCE_ADDRESSES_ADJUDICATOR` without the panel being convened.
 
+**A live run that holds every outcome is not a review.** The second run of
+record held 16 of 16 with no dissent, on a contract that still let a host take
+down one pinned record to steer a case, read the same bytes two ways depending on
+a header, and let the favoured party spend the only contest. None of that shows
+in a run whose hosts behave. It took three more read-only reviews to find, and
+the run script itself needed one fix: it had counted a refusal as held without
+checking it was refused for the reason under test.
+
 **Agreement is a majority, not unanimity.** In the run of record no validator
 disagreed in any round. In the passes before it several rounds carried one or
 two dissenting validators beside the agreeing majority - including the contest
 round that led to v0.2.1, where the majority's reading was the one the design
-had to rule out. The stored outcome is always the majority's, and
-the integration suite re-reads every stored verdict from the chain.
+had to rule out. The stored outcome is always the majority's, and the
+integration suite re-reads every stored verdict from the chain.
 <!-- LIVE:END -->
